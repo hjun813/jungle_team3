@@ -10,7 +10,7 @@
 
 <body class="bg-gray-100 p-6">
     <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-lg">
-        <h2 class="text-2xl font-bold mb-4">게시글 작성</h2>
+        <h2 class="text-2xl font-bold mb-4 text-center">게시글 작성</h2>
 
             <label class="block mb-2 font-medium">제목 (최대 30자)</label>
             <input type="text" id="post_title" class="w-full p-2 border rounded-lg mb-4" placeholder="제목을 입력하세요"
@@ -36,7 +36,8 @@
             <textarea id="details" class="w-full p-2 border rounded-lg mb-4 h-32" placeholder="세부 사항을 입력하세요"
                 maxlength="50"></textarea>
 
-            <button type="submit" onclick="validateForm(this)" class="w-full bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600">작성 완료</button>
+            <button type="submit" onclick="validateForm(this)" class="w-full bg-orange-500 text-white p-2 rounded-lg hover:bg-orange-600">작성 완료</button>
+            <button type="button" class="w-full bg-gray-500 text-white p-2 mt-2 rounded-lg hover:bg-gray-600">나가기</button>
     </div>
 
     <script>
