@@ -9,7 +9,7 @@ app.config["JWT_COOKIE_HTTPONLY"] = True
 jwt = JWTManager(app)
 
 import requests
-import datetime
+from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from pymongo import MongoClient
 from bson.objectid import ObjectId
@@ -27,16 +27,16 @@ def home():
 def signup_page():
     return render_template('signup.html')
 
-@app.route("/checkidduplicate",methods=["GET"])
+@app.route("/checkduplicate",methods=["GET"])
 def checkIdDuplicate():
     id=request.args.get('user_id')
     
     check_id = db.users.find_one({'userId' : id})
 
     if check_id:
-        return jsonify({"success": False, "message": "이미 존재하는 ID입니다."}), 200
+        return jsonify({"result": False, "message": "이미 존재하는 ID입니다."}), 200
     else:
-        return jsonify({"success": True, "message": "사용 가능한 ID입니다."}), 200
+        return jsonify({"result": True, "message": "사용 가능한 ID입니다."}), 200
     
 @app.route("/signup",methods=["POST"])
 def singup():
@@ -91,7 +91,7 @@ def posting():
     capacity = request.form['capacity']
     content = request.form['content']
     
-    nowTime = datetime.datetime.now()
+    nowTime = datetime.now()
     author_id = get_jwt_identity()
     
     post = {
@@ -117,46 +117,49 @@ def posting():
 
 @app.route("/postlist",methods = ["GET"])
 @jwt_required()
-def findAllPost():
+def findPost():
     current_user = get_jwt_identity()
+    now = datetime.now()
+    
+    filter_type = request.args.get("post_type")  # 게시물 유형 필터링
+    sort = request.args.get("sort_type","createdAt")
+    page = int(request.args.get("page", 1))  # 페이지 (기본값: 1)
+    per_page = 30  # 페이지당 문서 개수
+    skip_count = (page - 1) * per_page 
+    
+    query = {"dueDate": {"$gte": now}}
+    
+    if filter_type:
+        query['postType'] = filter_type
+    
+    if sort == "createdAt":
+        sort_field = "createdAt"
+        sort_value = -1
+    elif sort == "soonest":
+        sort_field = "dueDate"
+        sort_value =1
+        
     pipeline = [
-        {
-            "$addFields": {
-                "isJoined": {"$in": [current_user, "$attendPeople"]}
-            }
-        },
-        {
-            "$sort": {"createdAt": 1}
-        }
+        {"$match": query},  # 마감일이 지나지 않은 게시물만 조회
+        {"$addFields": {"isJoined": {"$in": [current_user, "$attendPeople"]}}},  # 현재 사용자가 참석했는지 여부 추가
+        {"$sort": {sort_field: sort_order}},  # 선택한 정렬 기준 적용
+        {"$skip": skip_count},  # 해당 페이지의 첫 번째 문서까지 건너뛰기
+        {"$limit": per_page}  # 페이지당 문서 개수 제한
     ]
+
     posts = list(db.posts.aggregate(pipeline))
     for post in posts:
         post['_id']=str(post['_id'])
         
-        
-    return jsonify({'result': True, 'posts': posts})
-
-@app.route("/filter", methods=["GET"])
-@jwt_required()
-def applyFilter():
-    condition = request.args.get('condition')
-    current_user = get_jwt_identity()
-    pipeline = [
-        {
-        "$addFields": {
-                "isJoined": {"$in": [current_user, "$attendPeople"]}
-            }
-        },
-        {
-            "$sort" : {"createdAt":1}
-        }
-    ] 
-    posts = list(db.posts.aggregate(pipeline))
+    total_posts = db.posts.count_documents(query)
+    total_pages = (total_posts + per_page - 1) // per_page
     
-    for post in posts:
-        post['_id'] = str(post['_id'])
-    
-    return jsonify({'result': True, 'posts': posts})
+    return render_template("post_list.html", 
+                           posts=posts,
+                           current_page=page,
+                           total_pages=total_pages,
+                           total_posts=total_posts,
+                           filter_due=filter_due,)
 
 @app.route("/applymeeting",methods=["PUT"])
 @jwt_required()
@@ -165,7 +168,6 @@ def applymeeting():
     current_user = get_jwt_identity()
     
     find_post = db.posts.find_one({'_id':_id})
-    attend_list = find_post.get('attendPeople', [])
     
     result = db.posts.find_one_and_update(
         {
@@ -181,9 +183,9 @@ def applymeeting():
     )
 
     if result:
-        return jsonify({'result': True, 'message': '신청 완료되었습니다.'}), 200
+        return render_template("post_list.html", result = True, message = '신청 완료되었습니다.'), 200
     else:
-        return jsonify({'result': False, 'message': '신청 실패: 정원이 초과되었거나 이미 신청하였습니다.'}), 400
+        return render_template("post_list.html", result = False, message = '신청 실패: 정원이 초과되었거나 이미 신청하였습니다.'), 400
 
 if __name__ == "__main__":
     app.run('0.0.0.0',port=5001,debug=True)
