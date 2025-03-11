@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" crossorigin="anonymous"></script>
+
+    <title>해요일</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        $(document).ready(function () {
+            $("#cards-box").html("");
+            showPosts();
+        });
+
+        function showPosts() {
+            $.ajax({
+                type: "GET",
+                url: "/posting",
+                data: {},
+                success: function (response) {
+                    let posts = response["posts"];
+                    console.log(posts);
+                    for (let i = 0; i < posts.length; i++) {
+                        makeCard(posts[i]["title"], posts[i]["author"], posts[i]["postType"], posts[i]["meetDate"], posts[i]["dueDate"], posts[i]["nowPersonnel"], posts[i]["goalPersonnel"], posts[i]["content"]);
+                    }
+                }
+            })
+        }
+
+        function makeCard(title, author, postType, meetDate, dueDate, nowPersonnel, goalPersonnel, content) {
+            let tempHtml = `<div class="bg-white p-6 rounded-lg">
+                        <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-xl font-semibold">${title}</h2>
+                        <span class="border rounded-lg p-2 text-sm w-20">${nowPersonnel} / ${goalPersonnel}</span>
+                        <h2 class="text-l">${author}</h2>
+                        <h2 class="text-l">${postType}</h2>
+                        <h2 class="text-l">${meetDate}</h2>
+                        <h2 class="text-l">${dueDate}</h2>
+                        <h2 class="text-l">${content}</h2>
+                        <div class="mt-4 flex justify-between">
+                        <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">신청</button>
+                        <button class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">취소</button>
+                        </div>
+                        </div>
+                        </div>`;
+            $("#cards-box").append(tempHtml);
+
+        }
+
+        // MongoDB에서 데이터를 불러오는 함수 (예제)
+        async function fetchData(cardId) {
+            // 실제 API 연결 시 여기에 fetch 코드 추가
+            const mockData = {
+                "card1": "모집정원 Data",
+                "card2": "모집정원 Data",
+                "card3": "모집정원 Data"
+            };
+
+            return mockData[cardId] || "데이터 없음";
+        }
+
+
+
+        // 페이지 로드 후 데이터 가져오기
+        document.addEventListener("DOMContentLoaded", async () => {
+            const cards = document.querySelectorAll(".mongo-data");
+
+            for (let card of cards) {
+                const cardId = card.getAttribute("data-id");
+                const data = await fetchData(cardId);
+                card.textContent = data;
+            }
+        });
+    </script>
+</head>
+
+<body class="bg-gray-100 p-10">
+    <div class="container mx-auto">
+        <!-- 제목 및 버튼 2개 (오른쪽 정렬) -->
+        <div class="flex justify-center items-center mb-4 relative">
+            <h1 class="text-3xl font-bold text-center">해요일</h1>
+            <div class="absolute right-0 flex gap-4">
+                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">게시글 작성</button>
+                <button class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">마이 페이지</button>
+            </div>
+        </div>
+
+        <!-- 버튼 4개 (1행) -->
+        <div class="flex justify-center gap-4 mb-8">
+            <button class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">All</button>
+            <button class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600">음식</button>
+            <button class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600">운동</button>
+            <button class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">기타</button>
+        </div>
+
+        <!-- 정렬 -->
+        <div class="absolute right-20 flex gap-4">
+            <select class="w-55 p-2 border rounded-lg mb-4">
+                <option>최신순</option>
+                <option>마감시간 짧은순</option>
+            </select>
+        </div>
+
+        <div id="cards-box" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <!-- 카드 1 -->
+
+            <!-- 카드 2 -->
+
+            <!-- 카드 3 -->
+
+        </div>
+    </div>
+</body>
+
+</html>
