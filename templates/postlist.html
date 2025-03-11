@@ -13,6 +13,7 @@
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
 
     </script>
@@ -21,20 +22,45 @@
 <body class="bg-gray-100 p-6">
     <div class="container mx-auto">
         <!-- 제목 및 버튼 2개 (오른쪽 정렬) -->
-        <div class="flex justify-center items-center mb-6 relative">
-            <h1 class="text-6xl font-extrabold text-center text-orange-600 hover:bg-orange-700 transition-all duration-300">해요일</h1>
-            <div class="absolute right-0 flex gap-4">
-                <a href="/posting" class="bg-green-600 text-white px-5 py-2 rounded-lg shadow-md hover:bg-green-700 transition-all duration-300">게시글 작성</a>
-                <button class="bg-green-500 text-white px-5 py-2 rounded-lg shadow-md hover:bg-green-600 transition-all duration-300">마이 페이지</button>
+        <header class="bg-white shadow-md mb-6">
+            <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+                <!-- Left section (empty for balance) -->
+                <div class="w-1/4"></div>
+                
+                <!-- Center title -->
+                <div class="w-2/4 text-center">
+                    <h1 class="text-2xl font-bold text-gray-800">해요일</h1>
+                </div>
+                
+                <!-- Right section with icon buttons -->
+                <div class="w-1/4 flex justify-end space-x-4">
+                    <!-- First icon button -->
+                    <a href="/posting" class="p-2 rounded-full text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition">
+                        <i class="fas fa-plus"> 게시글 작성</i>
+                    </a>
+                    <a href="/" class="p-2 rounded-full text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition">
+                        <i class="fas fa-circle-user"> 마이 페이지</i>
+                    </a>
+                </div>
             </div>
-        </div>
+        </header>
 
         <!-- 버튼 4개 (1행) -->
-        <div class="flex justify-center gap-4 mb-8">
-            <button class="bg-orange-600 text-white px-7 py-2 rounded-lg shadow-md hover:bg-orange-700 transition-all duration-300">All</button>
-            <button class="bg-orange-500 text-white px-6 py-2 rounded-lg shadow-md hover:bg-orange-600 transition-all duration-300">음식</button>
-            <button class="bg-orange-400 text-white px-6 py-2 rounded-lg shadow-md hover:bg-orange-500 transition-all duration-300">운동</button>
-            <button class="bg-gray-500 text-white px-6 py-2 rounded-lg shadow-md hover:bg-gray-600 transition-all duration-300">기타</button>
+        <div class="flex justify-center gap-4 ">
+            <div class="flex justify-center gap-4">
+                <button class="p-6 rounded-full text-gray-600 hover:bg-orange-200 focus:outline-none focus:bg-orange-400 focus:text-white transition">
+                    All
+                </button>
+                <button class="p-6 rounded-full text-gray-600 hover:bg-orange-200 focus:outline-none focus:bg-orange-400 focus:text-white transition">
+                    음식
+                </button>
+                <button class="p-6 rounded-full text-gray-600 hover:bg-orange-200 focus:outline-none focus:bg-orange-400 focus:text-white transition">
+                    운동
+                </button>
+                <button class="p-6 rounded-full text-gray-600 hover:bg-orange-200 focus:outline-none focus:bg-orange-400 focus:text-white transition">
+                    기타
+                </button>
+            </div>
         </div>
 
 
