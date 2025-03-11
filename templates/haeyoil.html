@@ -14,70 +14,7 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        $(document).ready(function () {
-            $("#cards-box").html("");
-            showPosts();
-        });
 
-        function showPosts() {
-            $.ajax({
-                type: "GET",
-                url: "/posting",
-                data: {},
-                success: function (response) {
-                    let posts = response["posts"];
-                    console.log(posts);
-                    for (let i = 0; i < posts.length; i++) {
-                        makeCard(posts[i]["title"], posts[i]["author"], posts[i]["postType"], posts[i]["meetDate"], posts[i]["dueDate"], posts[i]["nowPersonnel"], posts[i]["goalPersonnel"], posts[i]["content"]);
-                    }
-                }
-            })
-        }
-
-        function makeCard(title, author, postType, meetDate, dueDate, nowPersonnel, goalPersonnel, content) {
-            let tempHtml = `<div class="bg-white p-6 rounded-lg">
-                        <div class="flex justify-between items-center mb-3">
-                        <h2 class="text-xl font-semibold">${title}</h2>
-                        <span class="border rounded-lg p-2 text-sm w-20">${nowPersonnel} / ${goalPersonnel}</span>
-                        <h2 class="text-l">${author}</h2>
-                        <h2 class="text-l">${postType}</h2>
-                        <h2 class="text-l">${meetDate}</h2>
-                        <h2 class="text-l">${dueDate}</h2>
-                        <h2 class="text-l">${content}</h2>
-                        <div class="mt-4 flex justify-between">
-                        <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">신청</button>
-                        <button class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">취소</button>
-                        </div>
-                        </div>
-                        </div>`;
-            $("#cards-box").append(tempHtml);
-
-        }
-
-        // MongoDB에서 데이터를 불러오는 함수 (예제)
-        async function fetchData(cardId) {
-            // 실제 API 연결 시 여기에 fetch 코드 추가
-            const mockData = {
-                "card1": "모집정원 Data",
-                "card2": "모집정원 Data",
-                "card3": "모집정원 Data"
-            };
-
-            return mockData[cardId] || "데이터 없음";
-        }
-
-
-
-        // 페이지 로드 후 데이터 가져오기
-        document.addEventListener("DOMContentLoaded", async () => {
-            const cards = document.querySelectorAll(".mongo-data");
-
-            for (let card of cards) {
-                const cardId = card.getAttribute("data-id");
-                const data = await fetchData(cardId);
-                card.textContent = data;
-            }
-        });
     </script>
 </head>
 
@@ -110,7 +47,25 @@
 
         <div id="cards-box" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <!-- 카드 1 -->
-
+            <div id="cards-box">
+                {% for post in posts %}
+                <div class="bg-white p-6 rounded-lg">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-xl font-semibold">{{ post.title }}</h2>
+                        <span class="border rounded-lg p-2 text-sm w-20">{{ post.nowPersonnel }} / {{ post.goalPersonnel }}</span>
+                        <h2 class="text-l">{{ post.author }}</h2>
+                        <h2 class="text-l">{{ post.postType }}</h2>
+                        <h2 class="text-l">{{ post.meetDate }}</h2>
+                        <h2 class="text-l">{{ post.dueDate }}</h2>
+                        <h2 class="text-l">{{ post.content }}</h2>
+                    </div>
+                    <div class="mt-4 flex justify-between">
+                        <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">신청</button>
+                        <button class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">취소</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
             <!-- 카드 2 -->
 
             <!-- 카드 3 -->
