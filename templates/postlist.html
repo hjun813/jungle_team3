@@ -24,7 +24,7 @@
         <div class="flex justify-center items-center mb-6 relative">
             <h1 class="text-6xl font-extrabold text-center text-orange-600 hover:bg-orange-700 transition-all duration-300">해요일</h1>
             <div class="absolute right-0 flex gap-4">
-                <button class="bg-green-600 text-white px-5 py-2 rounded-lg shadow-md hover:bg-green-700 transition-all duration-300">게시글 작성</button>
+                <a href="/posting" class="bg-green-600 text-white px-5 py-2 rounded-lg shadow-md hover:bg-green-700 transition-all duration-300">게시글 작성</a>
                 <button class="bg-green-500 text-white px-5 py-2 rounded-lg shadow-md hover:bg-green-600 transition-all duration-300">마이 페이지</button>
             </div>
         </div>
@@ -59,7 +59,7 @@
                         <h2 class="text-l">{{ post.postType }}</h2>
                         <h2 class="text-l">{{ post.meetDate }}</h2>
                         <h2 class="text-l">{{ post.dueDate }}</h2>
-                        <h2 class="text-l">{{ post.content }}</h2>
+                        <h2 class="text-l">{{ post.details }}</h2>
                     </div>
                     <div class="mt-4 flex justify-between">
                         <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">신청</button>

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-screen">
+    <div class="container max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden flex flex-col md:flex-row">
+        <!-- 왼쪽 패널 -->
+        <div class="bg-orange-600 text-white p-8 md:w-1/2 flex flex-col justify-center">
+            <h1 class="text-3xl font-bold mb-6">환영합니다</h1>
+            <p class="text-lg text-orange-100 leading-relaxed">
+                저희 서비스에 가입하시면 다양한 혜택과 기능을 이용하실 수 있습니다.
+            </p>
+        </div>
+
+        <!-- 오른쪽 패널 -->
+        <div class="p-8 md:w-1/2">
+            {% block auth_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

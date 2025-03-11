@@ -1,88 +1,18 @@
-<!DOCTYPE html>
-<html lang="ko">
+{% extends "auth_base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>로그인</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+{% block title %}로그인{% endblock %}
 
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-        }
-    </style>
-</head>
-
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
-    <div class="container max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden flex flex-col md:flex-row">
-        <!-- 왼쪽 패널 -->
-        <div class="bg-orange-600 text-white p-8 md:w-1/2 flex flex-col justify-center">
-            <h1 class="text-3xl font-bold mb-6">환영합니다</h1>
-            <p class="text-lg text-orange-100 leading-relaxed">
-                저희 서비스에 로그인하여 다양한 기능을 이용해보세요.
-
-            </p>
-        </div>
-
-        <!-- 오른쪽 패널 -->
-        <div class="p-8 md:w-1/2">
-            <!-- 로그인 폼 -->
-            <div id="login-form" class="transition duration-300">
-                <h2 class="text-2xl font-bold text-center text-gray-800 mb-8">로그인</h2>
-                <div>
-                    <div class="mb-6">
-                        <label for="login-id" class="block text-sm font-medium text-gray-700 mb-2">아이디</label>
-                        <input type="text" id="login-id"
-                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                            placeholder="이메일 주소를 입력하세요" required>
-                    </div>
-                    <div class="mb-6">
-                        <label for="login-password" class="block text-sm font-medium text-gray-700 mb-2">비밀번호</label>
-                        <input type="password" id="login-password"
-                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                            placeholder="비밀번호를 입력하세요" required>
-                    </div>
-                    <div class="mb-6">
-                        <button type="submit"
-                            class="w-full bg-orange-600 text-white py-3 rounded-lg font-medium hover:bg-orange-700 transition duration-300" onclick="login()">로그인</button>
-                    </div> 
-                </div>
-                <div class="text-center text-gray-600">
-                    계정이 없으신가요?
-                    <a href="signup" class="text-orange-600 font-medium hover:underline">회원가입</a>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- <script src="/static/js/auth.js"></script> -->
-    <script>
-
-
-
-        function login() {
-            alert('로그인')
-            let user_id = $("#login-id").val();
-            let password = $("#login-password").val();
-
-            $.ajax({
-                type: "POST", // POST 방식으로 요청하겠다.
-                url: "/login", // 
-                data: { user_id: user_id, password: password }, // 데이터를 주는 방법
-                success: function (response) { // 성공하면
-                    if (response.result) {
-                        alert("로그인 성공!");
-                        //메인페이지로 넘어가기
-                        // window.location.href = "main.html"
-                    } else {
-                        alert("로그인 오류!")
-                    }
-                }
-            })
-        }
-    </script>
-</body>
-
-</html>
+{% block auth_content %}
+<h2 class="text-2xl font-bold text-center text-gray-800 mb-8">로그인</h2>
+<form action="/login" method="POST" class="transition duration-300">
+    {% if error %}
+        <p class="text-red-500 text-center mb-4">{{ error }}</p>
+    {% endif %}
+    <input type="text" name="user_id" placeholder="아이디 입력" required class="w-full px-4 py-3 rounded-lg border border-gray-300">
+    <input type="password" name="password" placeholder="비밀번호 입력" required class="w-full px-4 py-3 mt-4 rounded-lg border border-gray-300">
+    <button type="submit" class="w-full bg-orange-600 text-white py-3 mt-4 rounded-lg hover:bg-orange-700">로그인</button>
+</form>
+<div class="text-center text-gray-600 mt-4">
+    계정이 없으신가요? <a href="/signup" class="text-orange-600 font-medium hover:underline">회원가입</a>
+</div>
+{% endblock %}
