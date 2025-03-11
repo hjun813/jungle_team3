@@ -27,6 +27,10 @@ def home():
 def signup_page():
     return render_template('signup.html')
 
+@app.route("/posting")
+def posting_page():
+    return render_template('writepost.html')
+
 @app.route("/checkduplicate",methods=["GET"])
 def checkIdDuplicate():
     id=request.args.get('user_id')
@@ -183,9 +187,37 @@ def applymeeting():
     )
 
     if result:
+        # 여기서 만약 모집 정원이 다 되었으면 이벤트 로그 생성 메서드로 넘어가기
         return render_template("post_list.html", result = True, message = '신청 완료되었습니다.'), 200
     else:
         return render_template("post_list.html", result = False, message = '신청 실패: 정원이 초과되었거나 이미 신청하였습니다.'), 400
+    
+@app.route("/cancelmeeting",methods=["PUT"])
+@jwt_required()
+def cancelmeeting():
+    current_user = get_jwt_identity()
+    _id = ObjectId(request.json['_id'])
+    
+    result = db.posts.find_one_and_update(
+        {
+            '_id': _id,
+            '$expr': { '$lt': [ { '$size': "$attendPeople" }, "$goalPersonnel" ] },
+            'attendPeople': { '$in': current_user }
+        },
+        {
+        '$pull': { 'attendPeople': current_user },  
+        '$inc': { 'nowPersonnel': -1 }
+        },
+        return_document=ReturnDocument.AFTER
+    )
+    
+    
+    if result:
+        return render_template("post_list.html", result = True, message = '신청 취소가 완료되었습니다.'), 200
+    else:
+        return render_template("post_list.html", result = False, message = '신청 취소가 실패했습니다.'), 400
+    
 
+    
 if __name__ == "__main__":
     app.run('0.0.0.0',port=5001,debug=True)
