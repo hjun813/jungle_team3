@@ -46,28 +46,41 @@
             </select>
         </div>
 
-        <div id="cards-box" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <!-- 카드 1 -->
-            <div id="cards-box">
+        <div id="cards-box">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {% for post in posts %}
-                <div class="bg-white p-6 rounded-lg">
-                    <div class="flex justify-between items-center mb-3">
-                        <h2 class="text-xl font-semibold">{{ post.title }}</h2>
-                        <span class="border rounded-lg p-2 text-sm w-20">{{ post.nowPersonnel }} / {{ post.goalPersonnel
-                            }}</span>
-                        <h2 class="text-l">{{ post.author }}</h2>
-                        <h2 class="text-l">{{ post.postType }}</h2>
-                        <h2 class="text-l">{{ post.meetDate }}</h2>
-                        <h2 class="text-l">{{ post.dueDate }}</h2>
-                        <h2 class="text-l">{{ post.details }}</h2>
-                    </div>
-                    <div class="mt-4 flex justify-between">
-                        <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">신청</button>
-                        <button class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">취소</button>
+                <!-- 게시글 카드 1 -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden transition hover:shadow-lg">
+                    <div class="p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="bg-orange-100 text-orange-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+                                카테고리</span>
+                            <span class="text-sm text-gray-500">{{ post.nowPersonnel }} / {{ post.goalPersonnel}}</span>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2 text-gray-800">{{ post.title }}</h3>
+                        <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.author }}</p>
+                        <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.postType }}</p>
+                        <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.meetDate }}</p>
+                        <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.dueDate }}</p>
+                        <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.details }}</p>
+
+                        <div class="flex">
+                            <button
+                                class="flex-1 m-2 bg-orange-400 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                                onclick="join()">
+                                신청하기
+                            </button>
+                            <button
+                                class="flex-1 m-2 bg-orange-200 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                                onclick="cancel()">
+                                신청취소
+                            </button>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
             </div>
+        </div>
             <!-- 카드 2 -->
 
             <!-- 카드 3 -->
