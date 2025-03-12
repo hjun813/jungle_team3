@@ -76,7 +76,11 @@
           alert('모집 기간은 활동 날짜보다 뒤에 있을 수 없습니다.');
           return false;
       }
-      if (recruitmentCount <= 2 || recruitmentCount >=50) {
+      if(recruitmentDate && recruitmentDate < today){
+        alert('모집기간이 현재보다 과거의 날짜는 불가능합니다')
+        return false;
+      }
+      if (recruitmentCount <2 || recruitmentCount >50) {
           alert('모집 인원은 2명 이상 50명 이하이어야 합니다.');
           return false;
       }
