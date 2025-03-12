@@ -1,160 +1,216 @@
 {% extends "auth_base.html" %}
-
 {% block title %}회원가입{% endblock %}
-
 {% block auth_content %}
 <form id="signup-form" action="/signup" method="POST" onsubmit="return validateForm();" class="transition duration-300">
     <h2 class="text-2xl font-bold text-center text-gray-800 mb-8">회원가입</h2>
-
     <!-- Flash 메시지 표시 -->
     {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="mb-4">
-          {% for category, message in messages %}
-            <p class="text-sm {% if category == 'error' %}text-red-500{% elif category == 'success' %}text-green-500{% endif %}">
-              {{ message }}
-            </p>
-          {% endfor %}
-        </div>
-      {% endif %}
+    {% if messages %}
+    <div class="mb-4">
+        {% for category, message in messages %}
+        <p
+            class="text-sm {% if category == 'error' %}text-red-500{% elif category == 'success' %}text-green-500{% endif %}">
+            {{ message }}
+        </p>
+        {% endfor %}
+    </div>
+    {% endif %}
     {% endwith %}
-
     <!-- 이름 입력 -->
     <div class="mb-4">
         <label for="signup-name" class="block text-sm font-medium text-gray-700 mb-2">이름</label>
         <input type="text" id="signup-name" name="user_name" value="{{ user_name if user_name else '' }}"
-               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-               placeholder="이름을 입력하세요" required>
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            placeholder="이름을 입력하세요" required>
     </div>
-
     <!-- 아이디 입력 및 중복 확인 -->
     <div class="mb-4">
         <label for="signup-userid" class="block text-sm font-medium text-gray-700 mb-2">아이디</label>
         <div class="flex">
             <input type="text" id="signup-userid" name="user_id" value="{{ user_id if user_id else '' }}"
-                   class="flex-2 px-4 py-3 m-1 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                   placeholder="아이디를 입력하세요" required>
+                class="flex-2 px-4 py-3 m-1 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                placeholder="아이디를 입력하세요" required>
             <button type="button" id="check-duplicate-btn"
-                    class="flex-1 m-1 py-3 bg-orange-400 text-white rounded-lg font-medium hover:bg-orange-600 transition duration-300">
+                class="flex-1 m-1 py-3 bg-orange-400 text-white rounded-lg font-medium hover:bg-orange-600 transition duration-300">
                 중복확인
             </button>
         </div>
         <p id="duplicate-msg" class="text-sm mt-2"></p>
     </div>
-
     <!-- 비밀번호 입력 -->
     <div class="mb-4">
         <label for="signup-password" class="block text-sm font-medium text-gray-700 mb-2">비밀번호</label>
         <input type="password" id="signup-password" name="user_password"
-               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-               placeholder="비밀번호를 입력하세요" required>
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            placeholder="비밀번호를 입력하세요" required>
     </div>
-
     <!-- 비밀번호 확인 -->
     <div class="mb-6">
         <label for="signup-confirm-password" class="block text-sm font-medium text-gray-700 mb-2">비밀번호 확인</label>
         <input type="password" id="signup-confirm-password"
-               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-               placeholder="비밀번호를 다시 입력하세요" required>
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            placeholder="비밀번호를 다시 입력하세요" required>
     </div>
-
     <!-- 카카오톡 ID 입력 -->
     <div class="mb-6">
         <label for="signup-kakaoid" class="block text-sm font-medium text-gray-700 mb-2">카카오톡ID</label>
         <input type="text" id="signup-kakaoid" name="kakao_id" value="{{ kakao_id if kakao_id else '' }}"
-               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-               placeholder="카카오톡ID를 입력하세요">
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            placeholder="카카오톡ID를 입력하세요">
     </div>
-
-    <!-- 카카오톡 ID 입력 -->
+    <!-- email 입력 -->
     <div class="mb-6">
         <label for="signup-email" class="block text-sm font-medium text-gray-700 mb-2">email</label>
         <input type="text" id="signup-email" name="email" value="{{ email if email else '' }}"
-               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-               placeholder="email을 입력하세요">
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            placeholder="email을 입력하세요">
     </div>
-
+    <!-- OTP 요청 버튼 -->
+    <div class="mb-6">
+        <input type="otprequest" value="OTP 요청"
+            class="w-full bg-orange-400 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition duration-300 cursor-pointer"
+            onclick="requestOTP()">
+    </div>
+    <!-- OTP 입력 -->
+    <div class="mb-6">
+        <label for="signup-otp" class="block text-sm font-medium text-gray-700 mb-2">OTP</label>
+        <input type="text" id="signup-otp" name="otp" value="{{ otp if otp else '' }}"
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            placeholder="OTP를 입력하세요">
+    </div>
+    <!-- OTP 확인 버튼 -->
+    <div class="mb-6">
+        <input type="otpverify" value="OTP 확인"
+            class="w-full bg-orange-400 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition duration-300 cursor-pointer"
+            onclick="verifyOTP()">
+    </div>
     <!-- 회원가입 버튼 -->
     <div class="mb-6">
         <input type="submit" value="회원가입"
-               class="w-full bg-orange-400 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition duration-300 cursor-pointer">
+            class="w-full bg-orange-400 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition duration-300 cursor-pointer">
     </div>
 </form>
-
 <!-- 로그인 링크 -->
 <div class="text-center text-gray-600">
     이미 계정이 있으신가요?
     <a href="/login" class="text-orange-600 font-medium hover:underline">로그인</a>
 </div>
-
 <!-- jQuery CDN (없다면 추가) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     let checkduplicateId = false;
     let id;
-    function validateForm(){
-      let user_name = document.getElementById('signup-name').value.trim();
-      let user_id = document.getElementById('signup-userid').value.trim();
-      let password = document.getElementById('signup-password').value.trim();
-      let passwordConfirm= document.getElementById('signup-confirm-password').value.trim();
-      let kakao_id = document.getElementById('signup-kakaoid').value.trim();
-      let email = document.getElementById('signup-email').value.trim();
-
-      if (!user_name) {
-          alert('이름을 입력해야 합니다.');
-          return false;
-      }
-      if(!user_id || !checkduplicateId){
-        alert('아이디를 입력해야 합니다.');
-        return false;
-      }
-      if(user_id != id){
-        alert("검증받지 못한 ID입니다. 중복 검사를 실행하세요")
-        return false;
-      }
-      if (!password) {
-          alert('비밀번호를 입력해야합니다.');
-          return false;
-      }
-      if(password != passwordConfirm){
-        alert('비밀번호 일치하지 않습니다.')
-        return false;
-      }
-      if(!kakao_id){
-        alert('카카오 아이디를 입력해야 합니다.')
-        return false;
-      }
-      return true;
+    function validateForm() {
+        let user_name = document.getElementById('signup-name').value.trim();
+        let user_id = document.getElementById('signup-userid').value.trim();
+        let password = document.getElementById('signup-password').value.trim();
+        let passwordConfirm = document.getElementById('signup-confirm-password').value.trim();
+        let kakao_id = document.getElementById('signup-kakaoid').value.trim();
+        let email = document.getElementById('signup-email').value.trim();
+        if (!user_name) {
+            alert('이름을 입력해야 합니다.');
+            return false;
+        }
+        if (!user_id || !checkduplicateId) {
+            alert('아이디를 입력해야 합니다.');
+            return false;
+        }
+        if (user_id != id) {
+            alert("검증받지 못한 ID입니다. 중복 검사를 실행하세요")
+            return false;
+        }
+        if (!password) {
+            alert('비밀번호를 입력해야합니다.');
+            return false;
+        }
+        if (password != passwordConfirm) {
+            alert('비밀번호 일치하지 않습니다.')
+            return false;
+        }
+        if (!kakao_id) {
+            alert('카카오 아이디를 입력해야 합니다.')
+            return false;
+        }
+        return true;
     }
-  </script>
+</script>
 <script>
-$(document).ready(function(){
-    $("#check-duplicate-btn").click(function(){
-        var userId = $("#signup-userid").val();
-        if(!userId){
-            $("#duplicate-msg").text("아이디를 입력하세요.").css("color", "red");
+    function requestOTP() {
+        let email = document.getElementById('signup-email').value.trim();
+        if (!email) {
+            alert('이메일을 입력해야 합니다.');
             return;
         }
         $.ajax({
-            type: "GET",
-            url: "/checkduplicate",
-            data: { user_id: userId },
-            dataType: "json",
-            success: function(response){
-                if(response.result){
-                    checkduplicateId = true
-                    id = userId
-                    $("#duplicate-msg").text(response.message).css("color", "green");
+            type: "POST",
+            url: "/sentotp",
+            data: { email: email },
+            success: function (response) {
+                if (response["result"] == "success") {
+                    alert("OTP가 발송되었습니다. 이메일을 확인하세요.");
                 } else {
-                    checkduplicateId = false
-                    $("#duplicate-msg").text(response.message).css("color", "red");
+                    alert("OTP 요청 중 오류가 발생했습니다.");
                 }
             },
-            error: function(){
-                $("#duplicate-msg").text("중복 확인 중 오류가 발생했습니다.").css("color", "red");
+            error: function () {
+                alert("OTP 요청 중 오류가 발생했습니다.");
             }
         });
+    }
+</script>
+<script>
+    function verifyOTP() {
+        let email = document.getElementById('signup-email').value.trim();
+        let otp = document.getElementById('signup-otp').value.trim();
+        if (!otp) {
+            alert('OTP를 입력해야 합니다.');
+            return;
+        }
+        $.ajax({
+            type: "POST",
+            url: "/checkotp",
+            data: { input_otp: otp },
+            success: function (response) {
+                if (response["result"] == "success") {
+                    alert("OTP가 확인되었습니다.");
+                } else {
+                    alert("OTP 확인 중 오류가 발생했습니다.");
+                }
+            },
+            error: function () {
+                alert("OTP 확인 중 오류가 발생했습니다.");
+            }
+        });
+    }
+</script>
+<script>
+    $(document).ready(function () {
+        $("#check-duplicate-btn").click(function () {
+            var userId = $("#signup-userid").val();
+            if (!userId) {
+                $("#duplicate-msg").text("아이디를 입력하세요.").css("color", "red");
+                return;
+            }
+            $.ajax({
+                type: "GET",
+                url: "/checkduplicate",
+                data: { user_id: userId },
+                dataType: "json",
+                success: function (response) {
+                    if (response.result) {
+                        checkduplicateId = true
+                        id = userId
+                        $("#duplicate-msg").text(response.message).css("color", "green");
+                    } else {
+                        checkduplicateId = false
+                        $("#duplicate-msg").text(response.message).css("color", "red");
+                    }
+                },
+                error: function () {
+                    $("#duplicate-msg").text("중복 확인 중 오류가 발생했습니다.").css("color", "red");
+                }
+            });
+        });
     });
-});
 </script>
 {% endblock %}
