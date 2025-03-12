@@ -287,7 +287,45 @@ def applypost():
         return render_template("mypage_myapply.html", posts = attendposts)
     else:
         flash("조회 실패거나 조회할 게시물이 없습니다. 새로고침 하세요")
-        return render_template("attendpost.html")
+        return render_template("mypage_myapply.html")
+
+@app.route("/updatepost",methods=["POST"])
+@jwt_required()
+def updatepost():
+    current_user=get_jwt_identity()
+    _id = ObjectId(request.form['_id'])
+    
+    title = request.form.get('post_title')
+    postType = request.form.get('post_type')
+    meetDate = request.form.get('meet_date')
+    dueDate = request.form.get('due_date')
+    capacity = request.form.get('capacity')
+    details = request.form.get('details')
+    updatedAt = datetime.now()
+    
+    find_post = db.posts.find_one_and_update(
+        {'_id':_id},
+        {
+            "$set" : {
+                'title': title,
+                'postType': postType,
+                'meetDate': meetDate,
+                'dueDate': dueDate,
+                'goalPersonnel': capacity,
+                'details': details,
+                'updatedAt': updatedAt
+            }
+        },
+        return_document=ReturnDocument.AFTER
+    )
+    
+    if find_post:
+        flash("게시글이 성공적으로 수정되었습니다.", "success")
+        return redirect(url_for("mypost"))  # 게시글 리스트 페이지로 이동
+    else:
+        flash("게시글 수정에 실패했습니다.", "error")
+        return redirect(url_for("mypost"))
+    
     
     
     
