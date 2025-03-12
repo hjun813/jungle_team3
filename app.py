@@ -33,7 +33,7 @@ app.config['MAIL_USE_SSL'] = False
 jwt = JWTManager(app)
 mail = Mail(app)
 
-client = MongoClient("mongodb://localhost:27017/")
+client = MongoClient('mongodb://jungle:qwer1234@43.202.33.208', 27017)
 db = client.firstProject
     
 MAX_THREADS = 4  # 고정된 스레드 개수
@@ -547,6 +547,6 @@ def logout():
     
 
 if __name__ == "__main__":
-    app.run('0.0.0.0',port=5001,debug=True)
+    app.run('0.0.0.0',port=5000,debug=True)
 
     
