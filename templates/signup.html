@@ -157,7 +157,7 @@
                     otp_code = response['otp_code']
                     alert("OTP가 발송되었습니다. 이메일을 확인하세요.");
                 } else {
-                    alert("OTP 요청 중 오류가 발생했습니다.");
+                    alert(response["message"]);
                 }
             },
             error: function () {

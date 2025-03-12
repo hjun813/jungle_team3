@@ -74,11 +74,15 @@ def checkIdDuplicate():
 def sendOtp():
   email = request.form.get("email")
   
+  user = db.users.find_one({"email":email})
+  if user:
+      return jsonify({"result":False,"message":"이메일 중복"}), 200
+  
   if not email:
     return jsonify({"result": False, "message": "이메일을 입력하세요."}), 400
   otp_code = generate_otp()
-  print(otp_code)
   send_otp_email(email, otp_code)
+  
   return jsonify({"result":"success","otp_code":otp_code})
 
 
