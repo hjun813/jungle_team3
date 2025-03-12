@@ -20,6 +20,22 @@
 </head>
 <body class="bg-gray-100 p-10">
     <div class="container mx-auto">
+        {% set total_pages = total_pages or 1 %}
+         <!-- 🔥 Flash 메시지 표시 -->
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+        <div class="mb-6">
+            {% for category, message in messages %}
+            <div class="p-4 rounded-md text-white text-center 
+                        {% if category == 'success' %} bg-green-500 
+                        {% elif category == 'error' %} bg-red-500 
+                        {% else %} bg-gray-500 {% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
         <!-- 제목 및 버튼 2개 (오른쪽 정렬) -->
         <div class="flex justify-center items-center mb-4 relative">
             <h1 class="text-3xl font-bold text-center">해요일</h1>
@@ -49,7 +65,7 @@
         </div>
 
         <!-- 작성한 게시글 -->
-        <div id="posting-card-box" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div id="posting-card-box" class="grid grid-cols-1 sm:grid-cols-3 gap-6">
 
             {% for post in posts %}
             <!-- 게시글 카드 1 -->
@@ -58,13 +74,13 @@
                     <div class="flex justify-between items-center mb-2">
                         <span class="bg-orange-100 text-orange-800 text-xs font-semibold px-2.5 py-0.5 rounded">
                             {{post.postType}}</span>
-                        <span class="text-sm text-gray-500">{{ post.nowPersonnel }} / {{ post.goalPersonnel}}</span>
+                        <span class="text-sm text-gray-500">모집 인원 {{ post.nowPersonnel }} / {{ post.goalPersonnel}}</span>
                     </div>
                     <h3 class="text-lg font-bold mb-2 text-gray-800">{{ post.title }}</h3>
-                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.author }}</p>
-                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.meetDate }}</p>
-                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.dueDate }}</p>
-                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.details }}</p>
+                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">작성자   :   {{ post.author }}</p>
+                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">모임 날짜   :   {{ post.meetDate }}</p>
+                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">마감 기한   :   {{ post.dueDate }}</p>
+                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">세부 사항   :   {{ post.details }}</p>
 
                     <div class="flex">
                         <form action="/cancelmeetingonmypage" method="POST">
@@ -80,9 +96,18 @@
             </div>
             {% endfor %}
         </div>
-
-        <!-- 모달 창
-         해당 모임의 참여자와 카카오톡 아이디 보여주기 -->
+        <!-- 페이지 번호를 cards-box 아래로 이동 -->
+        <div class="flex justify-center mt-6">
+            <nav class="flex space-x-2">
+                {% if total_pages == 1 %}
+                    <a href="/mypage/applypost?page=1" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:bg-orange-400 focus:text-white">1</a>
+                {% else %}
+                    {% for page in range(1, total_pages+1) %}
+                        <a href="/mypage/applypost?page={{ page }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:bg-orange-400 focus:text-white">{{ page }}</a>
+                    {% endfor %}
+                {% endif %}
+            </nav>
+        </div>
 
     </div>
 </body>

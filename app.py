@@ -189,8 +189,10 @@ def posting():
     result = db.posts.insert_one(post)
     
     if result.acknowledged:
+        flash("게시물 업로드를 성공했습니다.","success")
         return redirect(url_for("findPost"))
     else:
+        flash("게시물 업로드 중 문제가 발생했습니다. 다시 시도해주세요","error")
         return render_template("posting.html")
 
 @app.route("/postlist",methods = ["GET"])
@@ -202,7 +204,7 @@ def findPost():
     filter_type = request.args.get("post_type")  # 게시물 유형 필터링
     sort = request.args.get("sort_type","latest")
     page = int(request.args.get("page", 1))  # 페이지 (기본값: 1)
-    per_page = 10  # 페이지당 문서 개수
+    per_page = 12  # 페이지당 문서 개수
     skip_count = (page - 1) * per_page 
     
     query = {"dueDate": {"$gte": now}}
@@ -239,7 +241,9 @@ def findPost():
                            current_page=page,
                            total_pages=total_pages,
                            total_posts=total_posts,
-                           filter_due=sort,)
+                           sort_type=sort,
+                           post_type=filter_type
+                           )
 
 @app.route("/applymeeting",methods=["POST"])
 @jwt_required()
@@ -273,8 +277,10 @@ def applymeeting():
         
     if result:
         # 여기서 만약 모집 정원이 다 되었으면 이벤트 로그 생성 메서드로 넘어가기
+        flash("신청 완료 되었습니다. 마이페이지를 확인해주세요","success")
         return redirect(url_for("findPost"))
     else:
+        flash("신청 과정 중 요류가 발생했습니다. 다시 신청해주세요", "error")
         return redirect(url_for("findPost"))
     
 @app.route("/cancelmeeting",methods=["POST"])
@@ -290,8 +296,10 @@ def cancelmeeting():
     
     result = cancel(_id,current_user)
     if result:
+        flash("신청 취소 되었습니다. 마이페이지를 확인해 주세요","error")
         return redirect(url_for("findPost"))
     else:
+        flash("신청 취소 과정 중 오류가 발생했습니다. 다시 취소해 주세요","error")
         return redirect(url_for("findPost"))
     
     
@@ -316,7 +324,7 @@ def mypost():
     current_user = get_jwt_identity()
     
     page = int(request.args.get("page", 1))  # 페이지 (기본값: 1)
-    per_page = 10  # 페이지당 문서 개수
+    per_page = 12  # 페이지당 문서 개수
     skip_count = (page - 1) * per_page 
     query = {"author": current_user}
     pipeline = [
@@ -344,7 +352,7 @@ def mypost():
     
     print(total_pages)
     if not myposts:
-        print("⚠️ 조회된 게시물이 없습니다.")  # 디버깅 출력
+        flash("조회된 게시물이 없습니다.")  # 디버깅 출력
         return render_template("mypage_mypost.html", posts=[], message="조회된 게시물이 없습니다.")
     return render_template("mypage_mypost.html", posts = myposts, total_pages = total_pages, total_posts=total_posts, page = page)
         
@@ -355,7 +363,7 @@ def mypost():
 def applypost():
     current_user = get_jwt_identity()
     page = int(request.args.get("page", 1))  # 페이지 (기본값: 1)
-    per_page = 10  # 페이지당 문서 개수
+    per_page = 12  # 페이지당 문서 개수
     skip_count = (page - 1) * per_page 
     query = {'author':{"$ne":current_user}}
     pipeline = [
@@ -378,11 +386,11 @@ def applypost():
             
     total_posts = db.posts.count_documents(query)
     total_pages = (total_posts + per_page - 1) // per_page
-    if len(attendposts) >= 0:
-        return render_template("mypage_myapply.html", posts = attendposts, total_pages = total_pages, total_posts = total_posts, page=page)
-    else:
+    if not attendposts:
         flash("조회 실패거나 조회할 게시물이 없습니다. 새로고침 하세요")
         return render_template("mypage_myapply.html")
+    
+    return render_template("mypage_myapply.html", posts = attendposts, total_pages = total_pages, total_posts = total_posts, page=page)
 
 @app.route("/updatepost",methods=["POST"])
 @jwt_required()
@@ -459,6 +467,7 @@ def cancelmeetingonmypage():
 
 @app.route('/logout')
 def logout():
+    flash("로그아웃 완료","success")
     response = redirect(url_for('home'))  # 로그인 페이지로 리디렉트
     unset_jwt_cookies(response)  # 'token' 쿠키 삭제
     return response

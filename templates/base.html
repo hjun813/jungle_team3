@@ -9,6 +9,21 @@
 </head>
 
 <body class="bg-gray-100 min-h-screen">
+    <!-- 🔥 Flash 메시지 표시 -->
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+    <div class="mb-6">
+        {% for category, message in messages %}
+        <div class="p-4 rounded-md text-white text-center 
+                    {% if category == 'success' %} bg-green-500 
+                    {% elif category == 'error' %} bg-red-500 
+                    {% else %} bg-gray-500 {% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
     {% block content %}{% endblock %}
 </body>
 </html>
