@@ -5,7 +5,11 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from pymongo import MongoClient, ReturnDocument
 from bson.objectid import ObjectId
+from flask_mail import Mail, Message
 import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import requests
 
 app = Flask(__name__)
@@ -15,8 +19,15 @@ app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
 app.config["JWT_COOKIE_CSRF_PROTECT"] = False
 app.config["JWT_COOKIE_SAMESITE"] = "Lax"
 app.config["JWT_COOKIE_HTTPONLY"] = True
-jwt = JWTManager(app)
+app.config["MAIL_SERVER"] = 'smtp.gmail.com'
+app.config["MAIL_PORT"] = 587
+app.config["MAIL_USERNAME"] = "purifiedpotion@gmail.com"
+app.config["MAIL_PASSWORD"] = "lrpm fjam tcaq jsio"
+app.config["MAIL_USE_TLS"] = True
+app.config['MAIL_USE_SSL'] = False
 
+jwt = JWTManager(app)
+mail = Mail(app)
 
 client = MongoClient("mongodb://localhost:27017/")
 db = client.firstProject
@@ -32,7 +43,7 @@ def signup_page():
 
 @app.route("/posting",methods=["GET"])
 def posting_page():
-    post_id = request.args.get("id")  # URL에서 게시물 ID 가져오기
+    post_id = request.args.get("_id")  # URL에서 게시물 ID 가져오기
     title = request.args.get("title", "")
     post_type = request.args.get("postType", "")
     meet_date = request.args.get("meetDate", "")
@@ -63,6 +74,7 @@ def signup():
         userId = request.form.get("user_id")
         password = request.form.get("user_password")
         kakaoId = request.form.get("kakao_id")
+        email = request.form.get("email")
 
         if not name or not userId or not password:
             flash("모든 필드를 입력하세요.", "error")
@@ -75,6 +87,7 @@ def signup():
             "userId": userId,
             "password": hashed_password,
             "kakaoId": kakaoId,
+            "email": email,
             "posts_ids": []
         }
 
@@ -149,7 +162,7 @@ def findPost():
     filter_type = request.args.get("post_type")  # 게시물 유형 필터링
     sort = request.args.get("sort_type","latest")
     page = int(request.args.get("page", 1))  # 페이지 (기본값: 1)
-    per_page = 30  # 페이지당 문서 개수
+    per_page = 10  # 페이지당 문서 개수
     skip_count = (page - 1) * per_page 
     
     query = {"dueDate": {"$gte": now}}
@@ -195,7 +208,7 @@ def applymeeting():
     current_user = get_jwt_identity()
     # find_post = db.posts.find_one({'_id':_id})
     
-    result = db.posts.find_one_and_update(
+    result = (db.posts.find_one_and_update(
         {
             '_id': _id,
             '$expr': { '$lte': [ { '$size': "$attendPeople" }, "$goalPersonnel" ] },
@@ -206,8 +219,18 @@ def applymeeting():
             '$inc': { 'nowPersonnel': 1 }
         },
         return_document=ReturnDocument.AFTER
-    )
+    ))
 
+    #모집 인원 다 채울 시 이메일 발송 로직
+    if result['nowPersonnel'] == int(result['goalPersonnel']):
+        state = "정원 총족이 되었습니다. 방장의 연락을 기다려 주세요!!"
+        
+        user_email = list()
+        for userId in result['attendPeople']:
+            user_email.append(db.users.find_one({'userId':userId},{'_id':0,'email':1})['email'])
+        
+        send_result(state, user_email)
+        
     if result:
         # 여기서 만약 모집 정원이 다 되었으면 이벤트 로그 생성 메서드로 넘어가기
         return redirect(url_for("findPost"))
@@ -219,6 +242,12 @@ def applymeeting():
 def cancelmeeting():
     current_user = get_jwt_identity()
     _id = ObjectId(request.form['_id'])
+    post = db.posts.find_one({'_id':_id},{'_id':0,'author':1})
+    
+    if current_user == post['author']:
+        flash("작성자는 참가 취소가 불가능 합니다.","error")
+        return redirect(url_for("findPost"))
+    
     result = cancel(_id,current_user)
     if result:
         return redirect(url_for("findPost"))
@@ -228,9 +257,6 @@ def cancelmeeting():
     
 def cancel(_id: ObjectId, current_user: str):
     postAuthor = db.posts.find_one({'_id':_id},{'_id': 0, 'author':1})
-    
-    if current_user == postAuthor['author']:
-        flash("작성자는 참가 취소가 불가능 합니다.","error")
     
     result = db.posts.update_one(
         {'_id': _id, 'attendPeople': current_user},  # current_user가 attendPeople 리스트에 있는 경우만 업데이트
@@ -269,7 +295,7 @@ def mypost():
 def applypost():
     current_user = get_jwt_identity()
     
-    allposts = list(db.posts.find({}))
+    allposts = list(db.posts.find({'author':{"$ne":current_user}}))
     
     attendposts = list()
     
@@ -309,8 +335,8 @@ def updatepost():
             "$set" : {
                 'title': title,
                 'postType': postType,
-                'meetDate': meetDate,
-                'dueDate': dueDate,
+                'meetDate': datetime.strptime(meetDate,"%Y-%m-%d"),
+                'dueDate': datetime.strptime(dueDate,"%Y-%m-%d"),
                 'goalPersonnel': capacity,
                 'details': details,
                 'updatedAt': updatedAt
@@ -329,18 +355,15 @@ def updatepost():
 @app.route("/checkattendpeople",methods=["GET"])
 @jwt_required()
 def checkattendpeople():
-    _id = ObjectId(request.args.get('_id'))
+    _id = ObjectId(request.args.get('id'))
 
-    posts = db.posts.find_one({'_id': _id}, {"_id": 0, "title":1, "author":1, "nowPersonnel":1,"goalPersonnel":1, "attendPeople": 1})
+    posts = db.posts.find_one({'_id': _id}, {"_id": 0, "title":1, "author":1, "postType":1,"nowPersonnel":1,"goalPersonnel":1, "attendPeople": 1})
     
     user_ids = list()
-    print(posts['attendPeople'])
-    
+
     for person in posts['attendPeople']:
         user_ids.append(db.users.find_one({'userId':person},{'_id':0,'userId':1,'kakaoId':1}))
         
-    for person in user_ids:
-        print(person)
     if user_ids:
         return render_template("mypage_mypost_listcheck.html",posts = posts, users = user_ids)
     else:
@@ -352,11 +375,43 @@ def checkattendpeople():
 def cancelmeetingonmypage():
     current_user = get_jwt_identity()
     _id = ObjectId(request.form['_id'])
+    post = db.posts.find_one({'_id':_id},{'_id':0,'author':1})
+    
+    if current_user == post['author']:
+        flash("작성자는 참가 취소가 불가능 합니다.","error")
+        return redirect(url_for("findPost"))
+    
     result = cancel(_id,current_user)
     if result:
         return redirect(url_for("applypost"))
     else:
         return redirect(url_for("applyPost"))
     
+def generate_otp(email_address, otp_create_time):
+  otp = str(randint(100000, 999999))
+  session[f'otp_{email_address}'] = otp  # 세션에 인증번호 저장
+  session[f'time_{email_address}'] = otp_create_time  # 인증번호 생성 시간 저장
+  return otp
+
+def send_otp(cert_info, otp):
+    cert_info = "cnrrn0312@gmail.com"
+    msg = Message('이메일 인증번호', sender=MAIL_USERNAME, recipients=[cert_info])
+    msg.body = '안녕하세요. 해요일 입니다.\n인증번호를 입력하여 이메일 인증을 완료해 주세요.\n인증번호 : {}'.format(otp)
+    mail.send(msg)
+    return "Sent"
+
+def send_result(state,user_emails):
+    msg = Message(
+        subject='모임 모집 결과', 
+        sender="purifiedpotion@gmail.com",  # Ensure this matches MAIL_USERNAME
+        recipients=user_emails  # Replace with actual recipient's email
+    )
+    msg.body = '안녕하세요. 해요일 입니다.\n 모임 모집 결과 알려드립니다.\n {}'.format(state)
+    mail.send(msg)
+    return "Sent"
+    
+
 if __name__ == "__main__":
     app.run('0.0.0.0',port=5001,debug=True)
+
+    
