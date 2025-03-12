@@ -1,7 +1,12 @@
 from flask import Flask, render_template, request, redirect, flash, url_for, session, jsonify,make_response
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, set_access_cookies, get_jwt_identity
 from jinja2 import Environment, FileSystemLoader
+from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
+from pymongo import MongoClient, ReturnDocument
+from bson.objectid import ObjectId
 import os
+import requests
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -11,12 +16,6 @@ app.config["JWT_COOKIE_CSRF_PROTECT"] = False
 app.config["JWT_COOKIE_SAMESITE"] = "Lax"
 app.config["JWT_COOKIE_HTTPONLY"] = True
 jwt = JWTManager(app)
-
-import requests
-from datetime import datetime
-from werkzeug.security import generate_password_hash, check_password_hash
-from pymongo import MongoClient
-from bson.objectid import ObjectId
 
 
 client = MongoClient("mongodb://localhost:27017/")
@@ -90,7 +89,7 @@ def login():
     find_user = db.users.find_one({'userId':user_id})
     
     if find_user and check_password_hash(find_user['password'], password):
-        access_token = create_access_token(identity=user_id)
+        access_token = create_access_token(identity=user_id, expires_delta=False)
         response =redirect(url_for("findPost"))
         set_access_cookies(response, access_token)
         return response
@@ -172,28 +171,25 @@ def findPost():
     total_posts = db.posts.count_documents(query)
     total_pages = (total_posts + per_page - 1) // per_page
     
-    return render_template("postlist.html", 
+    return render_template("postlist.html",
                            posts=posts,
                            current_page=page,
                            total_pages=total_pages,
                            total_posts=total_posts,
                            filter_due=sort,)
 
-
-
-@app.route("/applymeeting",methods=["PUT"])
+@app.route("/applymeeting",methods=["POST"])
 @jwt_required()
 def applymeeting():
     _id = ObjectId(request.form['_id'])
     current_user = get_jwt_identity()
-    
     # find_post = db.posts.find_one({'_id':_id})
     
     result = db.posts.find_one_and_update(
         {
             '_id': _id,
-            '$expr': { '$lt': [ { '$size': "$attendPeople" }, "$goalPersonnel" ] },
-            'attendPeople': { '$ne': current_user }
+            '$expr': { '$lte': [ { '$size': "$attendPeople" }, "$goalPersonnel" ] },
+            'attendPeople': { '$nin': [current_user] }
         },
         {
             '$addToSet': { 'attendPeople': current_user },
@@ -204,36 +200,77 @@ def applymeeting():
 
     if result:
         # 여기서 만약 모집 정원이 다 되었으면 이벤트 로그 생성 메서드로 넘어가기
-        return render_template("postlist.html", result = True, message = '신청 완료되었습니다.'), 200
+        return redirect(url_for("findPost"))
     else:
-        return render_template("postlist.html", result = False, message = '신청 실패: 정원이 초과되었거나 이미 신청하였습니다.'), 400
+        return redirect(url_for("findPost"))
     
-@app.route("/cancelmeeting",methods=["PUT"])
+@app.route("/cancelmeeting",methods=["POST"])
 @jwt_required()
 def cancelmeeting():
     current_user = get_jwt_identity()
-    _id = ObjectId(request.json['_id'])
+    _id = ObjectId(request.form['_id'])
+    
+    postAuthor = db.posts.find_one({'_id':_id},{'_id': 0, 'author':1})
+    
+    if current_user == postAuthor['author']:
+        flash("작성자는 참가 취소가 불가능 합니다.","error")
+        return redirect(url_for("findPost"))
     
     result = db.posts.find_one_and_update(
         {
             '_id': _id,
-            '$expr': { '$lt': [ { '$size': "$attendPeople" }, "$goalPersonnel" ] },
-            'attendPeople': { '$in': current_user }
+            'attendPeople': { '$in': [current_user] }
         },
         {
-        '$pull': { 'attendPeople': current_user },  
-        '$inc': { 'nowPersonnel': -1 }
+            '$pull': { 'attendPeople': current_user },  
+            '$inc': { 'nowPersonnel': -1 }
         },
         return_document=ReturnDocument.AFTER
     )
     
-    
     if result:
-        return render_template("postlist.html", result = True, message = '신청 취소가 완료되었습니다.'), 200
+        return redirect(url_for("findPost"))
     else:
-        return render_template("postlist.html", result = False, message = '신청 취소가 실패했습니다.'), 400
+        return redirect(url_for("findPost"))
     
+@app.route("/mypage/mypost",methods=["GET"])
+@jwt_required()
+def mypost():
+    current_user = get_jwt_identity()
+    
+    myposts = db.posts.find({"author":current_user})
+    
+    for post in myposts:
+        post['_id'] = str(post['_id'])
+        
+    if myposts:
+        return render_template("mypage.html", posts = myposts)
+    else:
+        flash("조회 실패 새로고침하세요")
+        return render_template("mypage.html")
+        
 
+@app.route("/mypage/applypost",methods=["GET"])    
+@jwt_required()
+def applypost():
+    current_user = get_jwt_identity()
+    
+    allposts = db.posts.find({})
+    
+    attendposts = list()
+    
+    for post in allposts:
+        post['_id'] = str(post['_id'])
+        if current_user in post['attendPeople']:
+            attendpost.append(post)
+    
+    if len(attendposts) >= 0:
+        return render_template("attendpost.html", posts = attendposts)
+    else:
+        flash("조회 실패거나 조회할 게시물이 없습니다. 새로고침 하세요")
+        return render_template("attendpost.html")
+    
+    
     
 if __name__ == "__main__":
     app.run('0.0.0.0',port=5001,debug=True)
