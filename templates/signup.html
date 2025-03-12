@@ -3,7 +3,7 @@
 {% block title %}회원가입{% endblock %}
 
 {% block auth_content %}
-<form id="signup-form" action="/signup" method="POST" class="transition duration-300">
+<form id="signup-form" action="/signup" method="POST" onsubmit="return validateForm();" class="transition duration-300">
     <h2 class="text-2xl font-bold text-center text-gray-800 mb-8">회원가입</h2>
 
     <!-- Flash 메시지 표시 -->
@@ -35,7 +35,7 @@
                    class="flex-2 px-4 py-3 m-1 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                    placeholder="아이디를 입력하세요" required>
             <button type="button" id="check-duplicate-btn"
-                    class="flex-1 m-1 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition duration-300">
+                    class="flex-1 m-1 py-3 bg-orange-400 text-white rounded-lg font-medium hover:bg-orange-600 transition duration-300">
                 중복확인
             </button>
         </div>
@@ -66,10 +66,18 @@
                placeholder="카카오톡ID를 입력하세요">
     </div>
 
+    <!-- 카카오톡 ID 입력 -->
+    <div class="mb-6">
+        <label for="signup-email" class="block text-sm font-medium text-gray-700 mb-2">email</label>
+        <input type="text" id="signup-email" name="email" value="{{ email if email else '' }}"
+               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+               placeholder="email을 입력하세요">
+    </div>
+
     <!-- 회원가입 버튼 -->
     <div class="mb-6">
         <input type="submit" value="회원가입"
-               class="w-full bg-orange-600 text-white py-3 rounded-lg font-medium hover:bg-orange-700 transition duration-300 cursor-pointer">
+               class="w-full bg-orange-400 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition duration-300 cursor-pointer">
     </div>
 </form>
 
@@ -81,6 +89,44 @@
 
 <!-- jQuery CDN (없다면 추가) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    let checkduplicateId = false;
+    let id;
+    function validateForm(){
+      let user_name = document.getElementById('signup-name').value.trim();
+      let user_id = document.getElementById('signup-userid').value.trim();
+      let password = document.getElementById('signup-password').value.trim();
+      let passwordConfirm= document.getElementById('signup-confirm-password').value.trim();
+      let kakao_id = document.getElementById('signup-kakaoid').value.trim();
+      let email = document.getElementById('signup-email').value.trim();
+
+      if (!user_name) {
+          alert('이름을 입력해야 합니다.');
+          return false;
+      }
+      if(!user_id || !checkduplicateId){
+        alert('아이디를 입력해야 합니다.');
+        return false;
+      }
+      if(user_id != id){
+        alert("검증받지 못한 ID입니다. 중복 검사를 실행하세요")
+        return false;
+      }
+      if (!password) {
+          alert('비밀번호를 입력해야합니다.');
+          return false;
+      }
+      if(password != passwordConfirm){
+        alert('비밀번호 일치하지 않습니다.')
+        return false;
+      }
+      if(!kakao_id){
+        alert('카카오 아이디를 입력해야 합니다.')
+        return false;
+      }
+      return true;
+    }
+  </script>
 <script>
 $(document).ready(function(){
     $("#check-duplicate-btn").click(function(){
@@ -96,13 +142,16 @@ $(document).ready(function(){
             dataType: "json",
             success: function(response){
                 if(response.result){
+                    checkduplicateId = true
+                    id = userId
                     $("#duplicate-msg").text(response.message).css("color", "green");
                 } else {
+                    checkduplicateId = false
                     $("#duplicate-msg").text(response.message).css("color", "red");
                 }
             },
             error: function(){
-                $("#duplicate-msg").text("중복 확인 중 오류가 발생").css("color", "red");
+                $("#duplicate-msg").text("중복 확인 중 오류가 발생했습니다.").css("color", "red");
             }
         });
     });
