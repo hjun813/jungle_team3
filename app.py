@@ -6,11 +6,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from pymongo import MongoClient, ReturnDocument
 from bson.objectid import ObjectId
 from flask_mail import Mail, Message
+# from apscheduer.schedulers.background import BackgroundScheduler
 import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import requests
+import random
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -31,7 +33,7 @@ mail = Mail(app)
 
 client = MongoClient("mongodb://localhost:27017/")
 db = client.firstProject
-# db.users.create_index([("userId", 1)], unique=True)
+
 
 @app.route("/")
 def home():
@@ -67,6 +69,47 @@ def checkIdDuplicate():
     else:
         return jsonify({"result": True, "message": "사용 가능한 ID입니다."}), 200
     
+
+@app.route("/sendotp", methods=["POST"])
+def sendOtp():
+  email = request.form.get("email")
+  
+  if not email:
+    return jsonify({"result": False, "message": "이메일을 입력하세요."}), 400
+  otp_code = generate_otp()
+  print(otp_code)
+  send_otp_email(email, otp_code)
+  return jsonify({"result":"success","otp_code":otp_code})
+
+
+def generate_otp():
+    return str(random.randint(100000, 999999))
+
+def send_otp_email(email, otp_code):
+    msg = Message(
+        subject='해요일 이메일 인증번호',
+        sender="purifiedpotion@gmail.com",
+        recipients=[email]
+    )
+    msg.body = '안녕하세요. 해요일 입니다.\n이메일 인증번호를 입력하세요.\n인증번호 : {}'.format(otp_code)
+    mail.send(msg)
+    return "Sent"
+    
+@app.route("/checkotp", methods=["POST"])
+def checkOtp():
+  email = request.form.get("email")
+  user_input = request.form.get("input_otp")
+  result= verify_otp_redis(email, user_input)
+  return jsonify({"result": result})
+
+def verify_otp_redis(email, user_input):
+    stored_otp = redis_client.get(f"otp:{email}")
+    if stored_otp and stored_otp == user_input:
+      flash("이메일 인증이 완료되었습니다.")
+      return True
+    flash("이메일 인증에 실패하셨습니다.")
+    return False
+
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
@@ -139,7 +182,7 @@ def posting():
         'meetDate' : datetime.strptime(meetDate,"%Y-%m-%d"),
         'dueDate' : datetime.strptime(dueDate,"%Y-%m-%d"),
         'nowPersonnel' : 1,
-        'goalPersonnel' : capacity,
+        'goalPersonnel' : int(capacity),
         'details' : details,
         'createdAt' : nowTime,
         'updatedAt' : nowTime,
@@ -204,7 +247,7 @@ def findPost():
 @app.route("/applymeeting",methods=["POST"])
 @jwt_required()
 def applymeeting():
-    _id = ObjectId(request.form['_id'])
+    _id = ObjectId(request.form.get('_id'))
     current_user = get_jwt_identity()
     # find_post = db.posts.find_one({'_id':_id})
     
@@ -222,7 +265,7 @@ def applymeeting():
     ))
 
     #모집 인원 다 채울 시 이메일 발송 로직
-    if result['nowPersonnel'] == int(result['goalPersonnel']):
+    if result['nowPersonnel'] == (result['goalPersonnel']):
         state = "정원 총족이 되었습니다. 방장의 연락을 기다려 주세요!!"
         
         user_email = list()
@@ -274,7 +317,17 @@ def cancel(_id: ObjectId, current_user: str):
 def mypost():
     current_user = get_jwt_identity()
     
-    myposts = list(db.posts.find({"author": current_user}))  # 리스트로 변환
+    page = int(request.args.get("page", 1))  # 페이지 (기본값: 1)
+    per_page = 10  # 페이지당 문서 개수
+    skip_count = (page - 1) * per_page 
+    query = {"author": current_user}
+    pipeline = [
+        {"$match": query},  # 마감일이 지나지 않은 게시물만 조회
+        {"$skip": skip_count},  # 해당 페이지의 첫 번째 문서까지 건너뛰기
+        {"$limit": per_page}  # 페이지당 문서 개수 제한
+    ]
+    
+    myposts = list(db.posts.aggregate(pipeline))  # 리스트로 변환
     
     for post in myposts:
         post['_id'] = str(post['_id'])
@@ -283,8 +336,10 @@ def mypost():
         if isinstance(post['dueDate'], datetime):
             post['dueDate'] = post['dueDate'].strftime("%Y-%m-%d")
         
+    total_posts = db.posts.count_documents(query)
+    total_pages = (total_posts + per_page - 1) // per_page
     if myposts:
-        return render_template("mypage_mypost.html", posts = myposts)
+        return render_template("mypage_mypost.html", posts = myposts, total_pages = total_pages, total_posts=total_posts, page = page)
     else:
         flash("조회 실패 새로고침하세요")
         return render_template("mypage_mypost.html")
@@ -294,8 +349,16 @@ def mypost():
 @jwt_required()
 def applypost():
     current_user = get_jwt_identity()
-    
-    allposts = list(db.posts.find({'author':{"$ne":current_user}}))
+    page = int(request.args.get("page", 1))  # 페이지 (기본값: 1)
+    per_page = 10  # 페이지당 문서 개수
+    skip_count = (page - 1) * per_page 
+    query = {'author':{"$ne":current_user}}
+    pipeline = [
+        {"$match": query},  # 마감일이 지나지 않은 게시물만 조회
+        {"$skip": skip_count},  # 해당 페이지의 첫 번째 문서까지 건너뛰기
+        {"$limit": per_page}  # 페이지당 문서 개수 제한
+    ]
+    allposts = list(db.posts.aggregate(pipeline))
     
     attendposts = list()
     
@@ -308,9 +371,10 @@ def applypost():
                 post['dueDate'] = post['dueDate'].strftime("%Y-%m-%d")
                 attendposts.append(post)
             
-    
+    total_posts = db.posts.count_documents(query)
+    total_pages = (total_posts + per_page - 1) // per_page
     if len(attendposts) >= 0:
-        return render_template("mypage_myapply.html", posts = attendposts)
+        return render_template("mypage_myapply.html", posts = attendposts, total_pages = total_pages, total_posts = total_posts, page=page)
     else:
         flash("조회 실패거나 조회할 게시물이 없습니다. 새로고침 하세요")
         return render_template("mypage_myapply.html")
@@ -360,7 +424,7 @@ def checkattendpeople():
     posts = db.posts.find_one({'_id': _id}, {"_id": 0, "title":1, "author":1, "postType":1,"nowPersonnel":1,"goalPersonnel":1, "attendPeople": 1})
     
     user_ids = list()
-
+    
     for person in posts['attendPeople']:
         user_ids.append(db.users.find_one({'userId':person},{'_id':0,'userId':1,'kakaoId':1}))
         
@@ -386,29 +450,7 @@ def cancelmeetingonmypage():
         return redirect(url_for("applypost"))
     else:
         return redirect(url_for("applyPost"))
-    
-def generate_otp(email_address, otp_create_time):
-  otp = str(randint(100000, 999999))
-  session[f'otp_{email_address}'] = otp  # 세션에 인증번호 저장
-  session[f'time_{email_address}'] = otp_create_time  # 인증번호 생성 시간 저장
-  return otp
 
-def send_otp(cert_info, otp):
-    cert_info = "cnrrn0312@gmail.com"
-    msg = Message('이메일 인증번호', sender=MAIL_USERNAME, recipients=[cert_info])
-    msg.body = '안녕하세요. 해요일 입니다.\n인증번호를 입력하여 이메일 인증을 완료해 주세요.\n인증번호 : {}'.format(otp)
-    mail.send(msg)
-    return "Sent"
-
-def send_result(state,user_emails):
-    msg = Message(
-        subject='모임 모집 결과', 
-        sender="purifiedpotion@gmail.com",  # Ensure this matches MAIL_USERNAME
-        recipients=user_emails  # Replace with actual recipient's email
-    )
-    msg.body = '안녕하세요. 해요일 입니다.\n 모임 모집 결과 알려드립니다.\n {}'.format(state)
-    mail.send(msg)
-    return "Sent"
     
 
 if __name__ == "__main__":

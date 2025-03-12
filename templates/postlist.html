@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 
@@ -80,64 +81,57 @@
         </form>
 
         <div id="cards-box" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <!-- 카드 1 -->
-            <div id="cards-box">
-                {% for post in posts %}
-                <div class="bg-white p-6 rounded-lg">
-                    <div class="flex justify-between items-center mb-3">
-                        <h2 class="text-xl font-semibold">{{ post.title }}</h2>
-                        <span class="border rounded-lg p-2 text-sm w-20">{{ post.nowPersonnel }} / {{ post.goalPersonnel}}</span>
-                        <h2 class="text-l">{{ post.author }}</h2>
-                        <h2 class="text-l">{{ post.postType }}</h2>
-                        <h2 class="text-l">{{ post.meetDate }}</h2>
-                        <h2 class="text-l">{{ post.dueDate }}</h2>
-                        <h2 class="text-l">{{ post.details }}</h2>
-                    </div>
-                    <div class="mt-4 flex justify-between">
-                        <!-- 신청 버튼 -->
-                        <form action="/applymeeting" method="POST">
-                            <input type="hidden" name="_id" value="{{ post._id }}">
-                            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
-                                신청
-                            </button>
-                        </form>
-
-                        <!-- 취소 버튼 -->
-                        <form action="/cancelmeeting" method="POST">
-                            <input type="hidden" name="_id" value="{{ post._id }}">
-                            <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
-                                취소
-                            </button>
-                        </form>
+            {% for post in posts %}
+                <div class="bg-white rounded-lg shadow-md overflow-hidden transition hover:shadow-lg">
+                    <div class="p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="bg-orange-100 text-orange-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+                                {{ post.postType }}</span>
+                            <span class="text-sm text-gray-500"> 모집 인원 {{ post.nowPersonnel }} / {{ post.goalPersonnel}}</span>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2 text-gray-800">{{ post.title }}</h3>
+                        <p class="text-gray-600 text-sm mb-3 line-clamp-3">작성자: {{ post.author }}</p>
+                        <p class="text-gray-600 text-sm mb-3 line-clamp-3">모임 날짜: {{ post.meetDate }}</p>
+                        <p class="text-gray-600 text-sm mb-3 line-clamp-3">마감 기한: {{ post.dueDate }}</p>
+                        <p class="text-gray-600 text-sm mb-3 line-clamp-3">세부 사항: {{ post.details }}</p>
+                        <div class="mt-4 flex">
+                            <!-- 신청 버튼 -->
+                            <form action="/applymeeting" method="POST">
+                                <input type="hidden" name="_id" value="{{ post._id }}">
+                                <button type="submit"
+                                    class="flex-1 m-2 bg-orange-400 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                                    {% if post.isJoined %} disabled {% endif %}>
+                                    신청
+                                </button>
+                            </form>
+                            <!-- 취소 버튼 -->
+                            <form action="/cancelmeeting" method="POST">
+                                <input type="hidden" name="_id" value="{{ post._id }}">
+                                <button type="submit"
+                                    class="flex-1 m-2 bg-orange-200 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                                    {% if not post.isJoined %} disabled {% endif %}>
+                                    취소
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
-                {% endfor %}
-            </div>
-            <!-- 카드 2 -->
-
-            <!-- 카드 3 -->
-
+            {% endfor %}
         </div>
-    </div>
-     <!-- footer 페이지번호 -->
-     <footer class="mt-auto py-4 bg-white shadow-md">
-        <div class="flex justify-center">
+        <!-- 페이지 번호를 cards-box 아래로 이동 -->
+        <div class="flex justify-center mt-6">
             <nav class="flex space-x-2">
-                <a href="#" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">이전</a>
-                <a href="#"
-                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:bg-orange-400 focus:text-white">1</a>
-                <a href="#"
-                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:bg-orange-400 focus:text-white">2</a>
-                <a href="#"
-                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:bg-orange-400 focus:text-white">3</a>
-                <a href="#"
-                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:bg-orange-400 focus:text-white">4</a>
-                <a href="#"
-                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:bg-orange-400 focus:text-white">5</a>
-                <a href="#" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">다음</a>
+                {% if total_pages == 1 %}
+                    <a href="/postlist?page=1" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:bg-orange-400 focus:text-white">1</a>
+                {% else %}
+                    {% for page in range(1, total_pages+1) %}
+                        <a href="/postlist?page={{ page }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:bg-orange-400 focus:text-white">{{ page }}</a>
+                    {% endfor %}
+                {% endif %}
             </nav>
         </div>
-    </footer>
+    </div>
+    
 </body>
 
 </html>

@@ -100,6 +100,8 @@
 <script>
     let checkduplicateId = false;
     let id;
+    let otp_code
+    let verifyOtpCode = false;
     function validateForm() {
         let user_name = document.getElementById('signup-name').value.trim();
         let user_id = document.getElementById('signup-userid').value.trim();
@@ -131,22 +133,28 @@
             alert('카카오 아이디를 입력해야 합니다.')
             return false;
         }
+        if(!verifyOtpCode){
+            alert("OTP 인증 후 시도하십시오")
+            return false;
+        }
         return true;
     }
-</script>
-<script>
+
+
     function requestOTP() {
         let email = document.getElementById('signup-email').value.trim();
+        
         if (!email) {
             alert('이메일을 입력해야 합니다.');
             return;
         }
         $.ajax({
             type: "POST",
-            url: "/sentotp",
+            url: "/sendotp",
             data: { email: email },
             success: function (response) {
                 if (response["result"] == "success") {
+                    otp_code = response['otp_code']
                     alert("OTP가 발송되었습니다. 이메일을 확인하세요.");
                 } else {
                     alert("OTP 요청 중 오류가 발생했습니다.");
@@ -157,30 +165,22 @@
             }
         });
     }
-</script>
-<script>
+
     function verifyOTP() {
-        let email = document.getElementById('signup-email').value.trim();
+        
         let otp = document.getElementById('signup-otp').value.trim();
+        console.log(otp)
+        console.log(otp_code)
         if (!otp) {
             alert('OTP를 입력해야 합니다.');
             return;
         }
-        $.ajax({
-            type: "POST",
-            url: "/checkotp",
-            data: { input_otp: otp },
-            success: function (response) {
-                if (response["result"] == "success") {
-                    alert("OTP가 확인되었습니다.");
-                } else {
-                    alert("OTP 확인 중 오류가 발생했습니다.");
-                }
-            },
-            error: function () {
-                alert("OTP 확인 중 오류가 발생했습니다.");
-            }
-        });
+        if(otp != otp_code){
+            alert("인증번호가 틀렸습니다.")
+        }else{
+            alert("인증 성공")
+            verifyOtpCode = true
+        }
     }
 </script>
 <script>
