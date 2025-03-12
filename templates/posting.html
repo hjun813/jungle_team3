@@ -62,25 +62,32 @@
       let recruitmentDate = document.getElementById('due_date').value;
       let recruitmentCount = document.getElementById('capacity').value;
       let details = document.getElementById('details').value.trim();
-      let today = new Date().toISOString().split('T')[0];
+
+      let today = new Date();  
+        let todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+        // ✅ 입력된 날짜들도 Date 객체로 변환
+        let activityDateObj = new Date(activityDate);
+        let recruitmentDateObj = new Date(recruitmentDate);
+
 
       if (!title) {
           alert('제목을 입력해야 합니다.');
           return false;
       }
-      if (!activityDate || activityDate < today) {
+      if (activityDateObj < todayOnly) {
           alert('활동 날짜 확인 후 다시 입력해 주세요.');
           return false;
       }
-      if (recruitmentDate && recruitmentDate > activityDate) {
+      if (recruitmentDateObj && recruitmentDateObj > activityDateObj) {
           alert('모집 기간은 활동 날짜보다 뒤에 있을 수 없습니다.');
           return false;
       }
-      if(recruitmentDate && recruitmentDate < today){
-        alert('모집기간이 현재보다 과거의 날짜는 불가능합니다')
+      if(recruitmentDateObj < todayOnly){
+        alert('모집기간이 현재 보다 옛날은 불가능 합니다.')
         return false;
       }
-      if (recruitmentCount <2 || recruitmentCount >50) {
+      if (recruitmentCount <= 2 || recruitmentCount >=50) {
           alert('모집 인원은 2명 이상 50명 이하이어야 합니다.');
           return false;
       }

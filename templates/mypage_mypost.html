@@ -73,15 +73,14 @@
                 <div class="p-4">
                     <div class="flex justify-between items-center mb-2">
                         <span class="bg-orange-100 text-orange-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-                            카테고리</span>
-                        <span class="text-sm text-gray-500">{{ post.nowPersonnel }} / {{ post.goalPersonnel}}</span>
+                            {{post.postType}}</span>
+                        <span class="text-sm text-gray-500">모집 인원 {{ post.nowPersonnel }} / {{ post.goalPersonnel}}</span>
                     </div>
                     <h3 class="text-lg font-bold mb-2 text-gray-800">{{ post.title }}</h3>
-                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.author }}</p>
-                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.postType }}</p>
-                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.meetDate }}</p>
-                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.dueDate }}</p>
-                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.details }}</p>
+                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">작성자   :   {{ post.author }}</p>
+                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">모임 날짜   :   {{ post.meetDate }}</p>
+                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">마감 기한   :   {{ post.dueDate }}</p>
+                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">세부 사항   :   {{ post.details }}</p>
                     <div class="flex">
                         <button 
                             class="flex-1 m-2 bg-orange-400 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"

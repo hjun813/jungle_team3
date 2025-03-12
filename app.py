@@ -1,14 +1,16 @@
 from flask import Flask, render_template, request, redirect, flash, url_for, session, jsonify,make_response
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, set_access_cookies, get_jwt_identity, unset_jwt_cookies
 from jinja2 import Environment, FileSystemLoader
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from pymongo import MongoClient, ReturnDocument
 from bson.objectid import ObjectId
 from flask_mail import Mail, Message
-# from apscheduer.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 import os
 import smtplib
+from concurrent.futures import ThreadPoolExecutor
+import atexit
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import requests
@@ -33,7 +35,77 @@ mail = Mail(app)
 
 client = MongoClient("mongodb://localhost:27017/")
 db = client.firstProject
+    
+MAX_THREADS = 4  # 고정된 스레드 개수
+BATCH_SIZE = 5  # 한 번에 처리할 게시물 개수
 
+def send_emails():
+    """마감 기한이 전날인 게시물을 찾아, 스레드 풀을 이용하여 병렬 이메일 전송"""
+    today = datetime.now()  # ✅ datetime 객체 유지
+    yesterday = today - timedelta(days=1)  # ✅ timedelta 적용 후 datetime 유지
+    yesterday = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)  # ✅ 날짜만 
+    
+    print(type(yesterday))
+
+    expired_posts = list(db.posts.find({"dueDate": {"$eq": yesterday}}))
+
+    if not expired_posts:
+        print("✅ 마감된 게시물이 없습니다.")
+        return
+
+    with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
+        for i in range(0, len(expired_posts), BATCH_SIZE):
+            batch = expired_posts[i:i + BATCH_SIZE]
+            executor.submit(process_post_batch, batch)  # 각 배치를 병렬 실행
+
+def process_post_batch(batch):
+    
+    for post in batch:
+        post_title = post["title"]
+        now = post['nowPersonnel']
+        goal = post['goalPersonnel']
+        user_ids = post.get("attendPeople")  # 해당 게시물 참가자 ID 목록
+        
+        user_emails = [
+            user["email"] for user in db.users.find(
+                {"userId": {"$in": user_ids}}, {"_id": 0, "email": 1}
+            )
+        ]
+
+        if user_emails:
+            send_email_to_participants(post_title,now,goal ,user_emails)  # 이메일 전송
+
+
+def send_email_to_participants(post_title,now,goal, email_list):
+    if now<goal:
+        send_result_email(email_list,post_title ,"모집에 실패하였습니다. 다른 모임에 참여해주세요")
+    elif now == goal:
+        send_result_email(email_list,post_title, "모집에 성공했습니다!! 작성자의 연락을 기다려주세요")
+    time.sleep(2)  # 이메일 전송에 걸리는 시간 (예제)
+
+    
+def send_result_email(emails, post_title, message):
+    subject = "해요일 {} 모집결과 안내" .format(post_title)
+    print(emails)
+    with app.app_context(): 
+        msg = Message(
+            subject=subject,
+            sender="purifiedpotion@gmail.com",
+            recipients=emails  # ✅ 리스트가 아닌 단일 이메일만 전달
+        )
+        msg.body = '안녕하세요. 해요일 입니다. 모집 결과 안내드립니다.\n{}'.format(message)
+        mail.send(msg)
+        print(emails)
+        return "Sent"
+
+# APScheduler 설정 (매일 00:01 실행)
+scheduler = BackgroundScheduler(timezone="Asia/Seoul")
+scheduler.add_job(send_emails, "cron", hour=0, minute=1)
+scheduler.start()
+
+atexit.register(lambda: scheduler.shutdown())  # 안전한 종료
+
+    
 
 @app.route("/")
 def home():
@@ -208,7 +280,7 @@ def findPost():
     skip_count = (page - 1) * per_page 
     
     query = {"dueDate": {"$gte": now}}
-    
+
     if filter_type and filter_type != "ALL":
         query['postType'] = filter_type
     
@@ -315,7 +387,7 @@ def cancel(_id: ObjectId, current_user: str):
     )
     if result.modified_count == 0:
         return None, "참가 취소할 대상이 없거나 이미 취소되었습니다."
-    
+    print(result)
     return result
 @app.route("/mypage/mypost",methods=["GET"])
 @jwt_required()
@@ -382,9 +454,9 @@ def applypost():
                 post['meetDate'] = post['meetDate'].strftime("%Y-%m-%d")
             if isinstance(post['dueDate'], datetime):
                 post['dueDate'] = post['dueDate'].strftime("%Y-%m-%d")
-                attendposts.append(post)
+            attendposts.append(post)
             
-    total_posts = db.posts.count_documents(query)
+    total_posts = len(attendposts)
     total_pages = (total_posts + per_page - 1) // per_page
     if not attendposts:
         flash("조회 실패거나 조회할 게시물이 없습니다. 새로고침 하세요")
@@ -453,8 +525,9 @@ def cancelmeetingonmypage():
     current_user = get_jwt_identity()
     _id = ObjectId(request.form['_id'])
     post = db.posts.find_one({'_id':_id},{'_id':0,'author':1})
-    
-    if current_user == post['author']:
+    today = datetime.now()
+    # or today > post['dueDate']
+    if current_user == post['author'] :
         flash("작성자는 참가 취소가 불가능 합니다.","error")
         return redirect(url_for("findPost"))
     

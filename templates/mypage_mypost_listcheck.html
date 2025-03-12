@@ -20,9 +20,9 @@
         {% if messages %}
         <div class="mb-6">
             {% for category, message in messages %}
-            <div class="p-4 rounded-md text-white text-center 
-                        {% if category == 'success' %} bg-green-500 
-                        {% elif category == 'error' %} bg-red-500 
+            <div class="p-4 rounded-md text-white text-center
+                        {% if category == 'success' %} bg-green-500
+                        {% elif category == 'error' %} bg-red-500
                         {% else %} bg-gray-500 {% endif %}">
                 {{ message }}
             </div>
@@ -64,8 +64,9 @@
                     </div>
                     <h3 class="text-lg font-bold mb-2 text-gray-800">{{ posts.title }}</h3>
                     {% for user in users %}
-                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">
-                       UserID : {{ user.userId }} kakaoID : {{ user.kakaoId }}
+                    <p class="text-gray-600 text-sm mb-3 line-clamp-3 text-center flex justify-center gap-x-4">
+                       <span>유저ID : {{ user.userId }}</span>
+                       <span>카카오ID : {{ user.kakaoId }}</span>
                     </p>
                     {% endfor %}
                     <div class="flex">
