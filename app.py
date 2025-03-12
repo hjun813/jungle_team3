@@ -287,76 +287,9 @@ def applypost():
         return render_template("mypage_myapply.html", posts = attendposts)
     else:
         flash("조회 실패거나 조회할 게시물이 없습니다. 새로고침 하세요")
-        return render_template("mypage_myapply.html")
-
-@app.route("/updatepost",methods=["POST"])
-@jwt_required()
-def updatepost():
-    current_user=get_jwt_identity()
-    _id = ObjectId(request.form['_id'])
+        return render_template("attendpost.html")
     
-    title = request.form.get('post_title')
-    postType = request.form.get('post_type')
-    meetDate = request.form.get('meet_date')
-    dueDate = request.form.get('due_date')
-    capacity = request.form.get('capacity')
-    details = request.form.get('details')
-    updatedAt = datetime.now()
     
-    find_post = db.posts.find_one_and_update(
-        {'_id':_id},
-        {
-            "$set" : {
-                'title': title,
-                'postType': postType,
-                'meetDate': meetDate,
-                'dueDate': dueDate,
-                'goalPersonnel': capacity,
-                'details': details,
-                'updatedAt': updatedAt
-            }
-        },
-        return_document=ReturnDocument.AFTER
-    )
-    
-    if find_post:
-        flash("게시글이 성공적으로 수정되었습니다.", "success")
-        return redirect(url_for("mypost"))  # 게시글 리스트 페이지로 이동
-    else:
-        flash("게시글 수정에 실패했습니다.", "error")
-        return redirect(url_for("mypost"))
-    
-@app.route("/checkattendpeople",methods=["GET"])
-@jwt_required()
-def checkattendpeople():
-    _id = ObjectId(request.args.get('_id'))
-
-    posts = db.posts.find_one({'_id': _id}, {"_id": 0, "title":1, "author":1, "nowPersonnel":1,"goalPersonnel":1, "attendPeople": 1})
-    
-    user_ids = list()
-    print(posts['attendPeople'])
-    
-    for person in posts['attendPeople']:
-        user_ids.append(db.users.find_one({'userId':person},{'_id':0,'userId':1,'kakaoId':1}))
-        
-    for person in user_ids:
-        print(person)
-    if user_ids:
-        return render_template("mypage_mypost_listcheck.html",posts = posts, users = user_ids)
-    else:
-        flash("참석자 명단 확인 불가", "error")
-        return render_template("mypage_mypost_listcheck.html")
-    
-@app.route("/cancelmeetingonmypage",methods=["POST"])
-@jwt_required()
-def cancelmeetingonmypage():
-    current_user = get_jwt_identity()
-    _id = ObjectId(request.form['_id'])
-    result = cancel(_id,current_user)
-    if result:
-        return redirect(url_for("applypost"))
-    else:
-        return redirect(url_for("applyPost"))
     
 if __name__ == "__main__":
     app.run('0.0.0.0',port=5001,debug=True)
