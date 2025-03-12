@@ -43,7 +43,7 @@
                 <button
                     class="p-2 rounded-full text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition" onclick="">
                     <!-- 메인페이지 이동 -->
-                    <i class="fas fa-home"> 메인페이지</i>
+                    <a href="/postlist" class="fas fa-home"> 메인페이지</a>
                 </button>
             </div>
         </div>
@@ -84,9 +84,9 @@
                             onclick="redirectToEdit('{{ post._id }}', '{{ post.title }}', '{{ post.postType }}', '{{ post.meetDate }}', '{{ post.dueDate }}', '{{ post.details }}', '{{ post.goalPersonnel }}')">
                             수정하기
                         </button>
-                        <button
-                            class="flex-1 m-2 bg-orange-200 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
-                            onclick="">
+                        <button 
+                            class="flex-1 m-2 bg-orange-400 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                            onclick="redirect('{{ post._id }}')">
                             명단확인
                         </button>
                     </div>
@@ -98,6 +98,10 @@
     <script>
         function redirectToEdit(id, title, postType, meetDate, dueDate, details, goalPersonnel) {
             let url = `/posting?id=${id}&title=${encodeURIComponent(title)}&postType=${encodeURIComponent(postType)}&meetDate=${meetDate}&dueDate=${dueDate}&details=${encodeURIComponent(details)}&goalPersonnel=${goalPersonnel}`;
+            window.location.href = url;
+        }
+        function redirect(id){
+            let url = `/checkattendpeople?_id=${id}`
             window.location.href = url;
         }
         </script>

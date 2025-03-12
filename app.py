@@ -219,30 +219,30 @@ def applymeeting():
 def cancelmeeting():
     current_user = get_jwt_identity()
     _id = ObjectId(request.form['_id'])
-    
-    postAuthor = db.posts.find_one({'_id':_id},{'_id': 0, 'author':1})
-    
-    if current_user == postAuthor['author']:
-        flash("작성자는 참가 취소가 불가능 합니다.","error")
-        return redirect(url_for("findPost"))
-    
-    result = db.posts.find_one_and_update(
-        {
-            '_id': _id,
-            'attendPeople': { '$in': [current_user] }
-        },
-        {
-            '$pull': { 'attendPeople': current_user },  
-            '$inc': { 'nowPersonnel': -1 }
-        },
-        return_document=ReturnDocument.AFTER
-    )
-    
+    result = cancel(_id,current_user)
     if result:
         return redirect(url_for("findPost"))
     else:
         return redirect(url_for("findPost"))
     
+    
+def cancel(_id: ObjectId, current_user: str):
+    postAuthor = db.posts.find_one({'_id':_id},{'_id': 0, 'author':1})
+    
+    if current_user == postAuthor['author']:
+        flash("작성자는 참가 취소가 불가능 합니다.","error")
+    
+    result = db.posts.update_one(
+        {'_id': _id, 'attendPeople': current_user},  # current_user가 attendPeople 리스트에 있는 경우만 업데이트
+        {
+            '$pull': {'attendPeople': current_user},  
+            '$inc': {'nowPersonnel': -1}
+        }
+    )
+    if result.modified_count == 0:
+        return None, "참가 취소할 대상이 없거나 이미 취소되었습니다."
+    
+    return result
 @app.route("/mypage/mypost",methods=["GET"])
 @jwt_required()
 def mypost():
@@ -326,6 +326,37 @@ def updatepost():
         flash("게시글 수정에 실패했습니다.", "error")
         return redirect(url_for("mypost"))
     
+@app.route("/checkattendpeople",methods=["GET"])
+@jwt_required()
+def checkattendpeople():
+    _id = ObjectId(request.args.get('_id'))
+
+    posts = db.posts.find_one({'_id': _id}, {"_id": 0, "title":1, "author":1, "nowPersonnel":1,"goalPersonnel":1, "attendPeople": 1})
+    
+    user_ids = list()
+    print(posts['attendPeople'])
+    
+    for person in posts['attendPeople']:
+        user_ids.append(db.users.find_one({'userId':person},{'_id':0,'userId':1,'kakaoId':1}))
+        
+    for person in user_ids:
+        print(person)
+    if user_ids:
+        return render_template("mypage_mypost_listcheck.html",posts = posts, users = user_ids)
+    else:
+        flash("참석자 명단 확인 불가", "error")
+        return render_template("mypage_mypost_listcheck.html")
+    
+@app.route("/cancelmeetingonmypage",methods=["POST"])
+@jwt_required()
+def cancelmeetingonmypage():
+    current_user = get_jwt_identity()
+    _id = ObjectId(request.form['_id'])
+    result = cancel(_id,current_user)
+    if result:
+        return redirect(url_for("applypost"))
+    else:
+        return redirect(url_for("applyPost"))
     
 if __name__ == "__main__":
     app.run('0.0.0.0',port=5001,debug=True)

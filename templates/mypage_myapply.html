@@ -63,16 +63,14 @@
                     <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.details }}</p>
 
                     <div class="flex">
-                        <button
-                            class="flex-1 m-2 bg-gray-400 text-white px-4 py-2 rounded-md focus:outline-none"
-                            onclick="">
-                            신청하기
-                        </button>
-                        <button
-                            class="flex-1 m-2 bg-orange-200 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
-                            onclick="">
-                            신청취소
-                        </button>
+                        <form action="/cancelmeetingonmypage" method="POST">
+                            <input type="hidden" name="_id" value="{{ post._id }}">  <!-- 게시물 ID 전달 -->
+                            <button
+                                type="submit"
+                                class="flex-1 m-2 bg-orange-200 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
+                                신청취소
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
