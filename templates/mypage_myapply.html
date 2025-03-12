@@ -27,21 +27,21 @@
                 <button
                     class="p-2 rounded-full text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition" onclick="">
                     <!-- 메인페이지 이동 -->
-                    <i class="fas fa-home"> 메인페이지</i>
+                    <a href="/postlist" class="fas fa-home"> 메인페이지</a>
                 </button>
             </div>
         </div>
 
         <!-- 버튼 4개 (1행) -->
         <div class="flex justify-center gap-4 mb-8">
-            <button id="posting-card"
-                class="p-4 rounded-full text-gray-600 hover:bg-orange-100 focus:outline-none focus:bg-orange-100 transition">
-                <i class="fa-solid fa-pen-to-square font-extrabold"> 작성한 게시글</i>
-            </button>
-            <button id="joining-card"
-                class="p-4 rounded-full text-gray-600 bg-orange-100 focus:outline-none">
+            <a href="/mypage/mypost"
+                class="p-4 rounded-full text-gray-600 hover:bg-orange-100 focus:outline-none focus:bg-orange-100 transition block text-center">
+                <i class="fa-solid fa-check-to-slot font-extrabold"> 작성한 게시글</i>
+            </a>
+            <a href="/mypage/applypost"
+                class="p-4 rounded-full text-gray-600 bg-orange-100 block text-center">
                 <i class="fa-solid fa-check-to-slot font-extrabold"> 신청한 게시글</i>
-            </button>
+            </a>
         </div>
 
         <!-- 작성한 게시글 -->
@@ -53,12 +53,11 @@
                 <div class="p-4">
                     <div class="flex justify-between items-center mb-2">
                         <span class="bg-orange-100 text-orange-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-                            카테고리</span>
+                            {{post.postType}}</span>
                         <span class="text-sm text-gray-500">{{ post.nowPersonnel }} / {{ post.goalPersonnel}}</span>
                     </div>
                     <h3 class="text-lg font-bold mb-2 text-gray-800">{{ post.title }}</h3>
                     <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.author }}</p>
-                    <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.postType }}</p>
                     <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.meetDate }}</p>
                     <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.dueDate }}</p>
                     <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.details }}</p>

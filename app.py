@@ -32,7 +32,17 @@ def signup_page():
 
 @app.route("/posting",methods=["GET"])
 def posting_page():
-    return render_template('posting.html')
+    post_id = request.args.get("id")  # URL에서 게시물 ID 가져오기
+    title = request.args.get("title", "")
+    post_type = request.args.get("postType", "")
+    meet_date = request.args.get("meetDate", "")
+    due_date = request.args.get("dueDate", "")
+    details = request.args.get("details", "")
+    goal_personnel = request.args.get("goalPersonnel", "")
+    
+    return render_template('posting.html',post_id=post_id, title=title, post_type=post_type,
+                           meet_date=meet_date, due_date=due_date,
+                           details=details, goal_personnel=goal_personnel)
 
 @app.route("/checkduplicate", methods=["GET"])
 def checkIdDuplicate():
@@ -137,20 +147,20 @@ def findPost():
     now = datetime.now()
     
     filter_type = request.args.get("post_type")  # 게시물 유형 필터링
-    sort = request.args.get("sort_type","createdAt")
+    sort = request.args.get("sort_type","latest")
     page = int(request.args.get("page", 1))  # 페이지 (기본값: 1)
     per_page = 30  # 페이지당 문서 개수
     skip_count = (page - 1) * per_page 
     
     query = {"dueDate": {"$gte": now}}
     
-    if filter_type:
+    if filter_type and filter_type != "ALL":
         query['postType'] = filter_type
     
-    if sort == "createdAt":
+    if sort == "latest":
         sort_field = "createdAt"
         sort_value = -1
-    elif sort == "soonest":
+    elif sort == "shortest":
         sort_field = "dueDate"
         sort_value =1
     
@@ -238,16 +248,20 @@ def cancelmeeting():
 def mypost():
     current_user = get_jwt_identity()
     
-    myposts = db.posts.find({"author":current_user})
+    myposts = list(db.posts.find({"author": current_user}))  # 리스트로 변환
     
     for post in myposts:
         post['_id'] = str(post['_id'])
+        if isinstance(post['meetDate'], datetime):
+            post['meetDate'] = post['meetDate'].strftime("%Y-%m-%d")
+        if isinstance(post['dueDate'], datetime):
+            post['dueDate'] = post['dueDate'].strftime("%Y-%m-%d")
         
     if myposts:
-        return render_template("mypage.html", posts = myposts)
+        return render_template("mypage_mypost.html", posts = myposts)
     else:
         flash("조회 실패 새로고침하세요")
-        return render_template("mypage.html")
+        return render_template("mypage_mypost.html")
         
 
 @app.route("/mypage/applypost",methods=["GET"])    
@@ -255,20 +269,63 @@ def mypost():
 def applypost():
     current_user = get_jwt_identity()
     
-    allposts = db.posts.find({})
+    allposts = list(db.posts.find({}))
     
     attendposts = list()
     
     for post in allposts:
         post['_id'] = str(post['_id'])
         if current_user in post['attendPeople']:
-            attendpost.append(post)
+            if isinstance(post['meetDate'], datetime):
+                post['meetDate'] = post['meetDate'].strftime("%Y-%m-%d")
+            if isinstance(post['dueDate'], datetime):
+                post['dueDate'] = post['dueDate'].strftime("%Y-%m-%d")
+                attendposts.append(post)
+            
     
     if len(attendposts) >= 0:
-        return render_template("attendpost.html", posts = attendposts)
+        return render_template("mypage_myapply.html", posts = attendposts)
     else:
         flash("조회 실패거나 조회할 게시물이 없습니다. 새로고침 하세요")
-        return render_template("attendpost.html")
+        return render_template("mypage_myapply.html")
+
+@app.route("/updatepost",methods=["POST"])
+@jwt_required()
+def updatepost():
+    current_user=get_jwt_identity()
+    _id = ObjectId(request.form['_id'])
+    
+    title = request.form.get('post_title')
+    postType = request.form.get('post_type')
+    meetDate = request.form.get('meet_date')
+    dueDate = request.form.get('due_date')
+    capacity = request.form.get('capacity')
+    details = request.form.get('details')
+    updatedAt = datetime.now()
+    
+    find_post = db.posts.find_one_and_update(
+        {'_id':_id},
+        {
+            "$set" : {
+                'title': title,
+                'postType': postType,
+                'meetDate': meetDate,
+                'dueDate': dueDate,
+                'goalPersonnel': capacity,
+                'details': details,
+                'updatedAt': updatedAt
+            }
+        },
+        return_document=ReturnDocument.AFTER
+    )
+    
+    if find_post:
+        flash("게시글이 성공적으로 수정되었습니다.", "success")
+        return redirect(url_for("mypost"))  # 게시글 리스트 페이지로 이동
+    else:
+        flash("게시글 수정에 실패했습니다.", "error")
+        return redirect(url_for("mypost"))
+    
     
 if __name__ == "__main__":
     app.run('0.0.0.0',port=5001,debug=True)

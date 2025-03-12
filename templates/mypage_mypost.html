@@ -21,6 +21,21 @@
 
 <body class="bg-gray-100 p-10">
     <div class="container mx-auto">
+        <!-- 🔥 Flash 메시지 표시 -->
+        {% with messages = get_flashed_messages(with_categories=True) %}
+          {% if messages %}
+            <div class="mb-6">
+              {% for category, message in messages %}
+                <div class="p-4 rounded-md text-white text-center 
+                            {% if category == 'success' %} bg-green-500 
+                            {% elif category == 'error' %} bg-red-500 
+                            {% else %} bg-gray-500 {% endif %}">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
         <!-- 제목 및 버튼 2개 (오른쪽 정렬) -->
         <div class="flex justify-center items-center mb-4 relative">
             <h1 class="text-3xl font-bold text-center">해요일</h1>
@@ -35,14 +50,14 @@
 
         <!-- 버튼 4개 (1행) -->
         <div class="flex justify-center gap-4 mb-8">
-            <button id="posting-card"
-                class="p-4 rounded-full text-gray-600 bg-orange-100 focus:outline-none">
-                <i class="fa-solid fa-pen-to-square font-extrabold"> 작성한 게시글</i>
-            </button>
-            <button id="joining-card"
-                class="p-4 rounded-full text-gray-600 hover:bg-orange-100 focus:outline-none focus:bg-orange-100 transition">
+            <a href="/mypage/mypost"
+                class="p-4 rounded-full text-gray-600 bg-orange-100 block text-center">
+                <i class="fa-solid fa-check-to-slot font-extrabold"> 작성한 게시글</i>
+            </a>
+            <a href="/mypage/applypost"
+                class="p-4 rounded-full text-gray-600 hover:bg-orange-100 focus:outline-none focus:bg-orange-100 transition block text-center">
                 <i class="fa-solid fa-check-to-slot font-extrabold"> 신청한 게시글</i>
-            </button>
+            </a>
         </div>
 
         <!-- 작성한 게시글 -->
@@ -64,9 +79,9 @@
                     <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.dueDate }}</p>
                     <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.details }}</p>
                     <div class="flex">
-                        <button
+                        <button 
                             class="flex-1 m-2 bg-orange-400 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
-                            onclick="">
+                            onclick="redirectToEdit('{{ post._id }}', '{{ post.title }}', '{{ post.postType }}', '{{ post.meetDate }}', '{{ post.dueDate }}', '{{ post.details }}', '{{ post.goalPersonnel }}')">
                             수정하기
                         </button>
                         <button
@@ -79,11 +94,13 @@
             </div>
             {% endfor %}
         </div>
-
-        <!-- 모달 창
-         해당 모임의 참여자와 카카오톡 아이디 보여주기 -->
-
     </div>
+    <script>
+        function redirectToEdit(id, title, postType, meetDate, dueDate, details, goalPersonnel) {
+            let url = `/posting?id=${id}&title=${encodeURIComponent(title)}&postType=${encodeURIComponent(postType)}&meetDate=${meetDate}&dueDate=${dueDate}&details=${encodeURIComponent(details)}&goalPersonnel=${goalPersonnel}`;
+            window.location.href = url;
+        }
+        </script>
 </body>
 
 </html>

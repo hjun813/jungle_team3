@@ -13,6 +13,7 @@
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 아이콘 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
 
@@ -29,76 +30,69 @@
         </div>
     {% endif %}
     {% endwith %}
-    <div class="container mx-auto">
+    <div class="container mx-auto flex flex-col h-dvh">
         <!-- 제목 및 버튼 2개 (오른쪽 정렬) -->
         <header class="bg-white shadow-md mb-6">
             <div class="container mx-auto px-4 py-4 flex items-center justify-between">
                 <!-- Left section (empty for balance) -->
                 <div class="w-1/4"></div>
-                
+
                 <!-- Center title -->
                 <div class="w-2/4 text-center">
                     <h1 class="text-2xl font-bold text-gray-800">해요일</h1>
                 </div>
-                
+
                 <!-- Right section with icon buttons -->
                 <div class="w-1/4 flex justify-end space-x-4">
                     <!-- First icon button -->
-                    <a href="/posting" class="p-2 rounded-full text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition">
+                    <a href="/posting"
+                        class="p-2 rounded-full text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition">
                         <i class="fas fa-plus"> 게시글 작성</i>
                     </a>
-                    <a href="/" class="p-2 rounded-full text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition">
+                    <a href="/mypage/mypost"
+                        class="p-2 rounded-full text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition">
                         <i class="fas fa-circle-user"> 마이 페이지</i>
                     </a>
                 </div>
             </div>
         </header>
 
-        <!-- 버튼 4개 (1행) -->
-        <div class="flex justify-center gap-4 ">
-            <div class="flex justify-center gap-4">
-                <button class="p-6 rounded-full text-gray-600 hover:bg-orange-200 focus:outline-none focus:bg-orange-400 focus:text-white transition">
-                    All
-                </button>
-                <button class="p-6 rounded-full text-gray-600 hover:bg-orange-200 focus:outline-none focus:bg-orange-400 focus:text-white transition">
-                    음식
-                </button>
-                <button class="p-6 rounded-full text-gray-600 hover:bg-orange-200 focus:outline-none focus:bg-orange-400 focus:text-white transition">
-                    운동
-                </button>
-                <button class="p-6 rounded-full text-gray-600 hover:bg-orange-200 focus:outline-none focus:bg-orange-400 focus:text-white transition">
-                    기타
-                </button>
+        <!-- 카테고리, 정렬 -->
+        <form action="/postlist" method="GET" class="flex flex-col items-center">
+            <div class="mt-4 flex gap-4">
+                <!-- 카테고리 -->
+                <div class="p-2">카테고리:</div>
+                <select name="post_type" class="w-55 p-2 border rounded-lg">
+                    <option value="ALL">ALL</option>
+                    <option value="음식">음식</option>
+                    <option value="운동">운동</option>
+                    <option value="기타">기타</option>
+                </select>
+                <!-- 정렬 옵션 -->
+                <div class="p-2">정렬:</div>
+                <select name="sort_type" class="w-55 p-2 border rounded-lg">
+                    <option value="latest">최신순</option>
+                    <option value="shortest">마감시간 짧은순</option>
+                </select>
+                <button type="submit"
+                    class="p-2 bg-orange-400 text-white rounded-lg hover:bg-orange-600 transition">정렬하기</button>
             </div>
-        </div>
+        </form>
 
-
-        <!-- 정렬 -->
-        <div class="absolute right-20 flex gap-4">
-            <select class="w-55 p-2 border rounded-lg mb-4">
-                <option>최신순</option>
-                <option>마감시간 짧은순</option>
-            </select>
-        </div>
-
-        <div id="cards-box">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div id="cards-box" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <!-- 카드 1 -->
+            <div id="cards-box">
                 {% for post in posts %}
-                <!-- 게시글 카드 1 -->
-                <div class="bg-white rounded-lg shadow-md overflow-hidden transition hover:shadow-lg">
-                    <div class="p-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="bg-orange-100 text-orange-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-                                카테고리</span>
-                            <span class="text-sm text-gray-500">{{ post.nowPersonnel }} / {{ post.goalPersonnel}}</span>
-                        </div>
-                        <h3 class="text-lg font-bold mb-2 text-gray-800">{{ post.title }}</h3>
-                        <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.author }}</p>
-                        <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.postType }}</p>
-                        <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.meetDate }}</p>
-                        <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.dueDate }}</p>
-                        <p class="text-gray-600 text-sm mb-3 line-clamp-3">{{ post.details }}</p>
-
+                <div class="bg-white p-6 rounded-lg">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-xl font-semibold">{{ post.title }}</h2>
+                        <span class="border rounded-lg p-2 text-sm w-20">{{ post.nowPersonnel }} / {{ post.goalPersonnel}}</span>
+                        <h2 class="text-l">{{ post.author }}</h2>
+                        <h2 class="text-l">{{ post.postType }}</h2>
+                        <h2 class="text-l">{{ post.meetDate }}</h2>
+                        <h2 class="text-l">{{ post.dueDate }}</h2>
+                        <h2 class="text-l">{{ post.details }}</h2>
+                    </div>
                     <div class="mt-4 flex justify-between">
                         <!-- 신청 버튼 -->
                         <form action="/applymeeting" method="POST">
@@ -107,6 +101,7 @@
                                 신청
                             </button>
                         </form>
+
                         <!-- 취소 버튼 -->
                         <form action="/cancelmeeting" method="POST">
                             <input type="hidden" name="_id" value="{{ post._id }}">
@@ -118,7 +113,31 @@
                 </div>
                 {% endfor %}
             </div>
+            <!-- 카드 2 -->
+
+            <!-- 카드 3 -->
+
+        </div>
     </div>
+     <!-- footer 페이지번호 -->
+     <footer class="mt-auto py-4 bg-white shadow-md">
+        <div class="flex justify-center">
+            <nav class="flex space-x-2">
+                <a href="#" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">이전</a>
+                <a href="#"
+                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:bg-orange-400 focus:text-white">1</a>
+                <a href="#"
+                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:bg-orange-400 focus:text-white">2</a>
+                <a href="#"
+                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:bg-orange-400 focus:text-white">3</a>
+                <a href="#"
+                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:bg-orange-400 focus:text-white">4</a>
+                <a href="#"
+                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:bg-orange-400 focus:text-white">5</a>
+                <a href="#" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">다음</a>
+            </nav>
+        </div>
+    </footer>
 </body>
 
 </html>

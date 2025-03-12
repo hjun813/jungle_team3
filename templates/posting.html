@@ -8,35 +8,49 @@
 </head>
 <body class="bg-gray-100 p-6">
   <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-lg">
-    <h2 class="text-4xl font-bold mb-8 text-center">게시글 작성</h2>
+    <h2 class="text-4xl font-bold mb-8 text-center">
+        {% if _id %}게시글 수정{% else %}게시글 작성{% endif %}
+      </h2>
     <!-- 모든 입력 필드를 포함하는 form -->
-    <form id="posting-form" action="/posting" method="POST" onsubmit="return validateForm();" class="transition duration-300">
-      <label class="block mb-2 font-medium">제목</label>
-      <input type="text" id="post_title" name="post_title" class="w-full p-2 border rounded-lg mb-4" placeholder="제목을 입력하세요(최대 30자)" maxlength="30">
-
-      <label class="block mb-2 font-medium">게시글 유형</label>
-      <select id="post_type" name="post_type" class="w-full p-2 border rounded-lg mb-4">
-          <option>음식</option>
-          <option>운동</option>
-          <option>기타</option>
-      </select>
-      <label class="block mb-2 font-medium">활동 날짜</label>
-      <input type="date" id="meet_date" name="meet_date" class="w-full p-2 border rounded-lg mb-4">
-
-      <label class="block mb-2 font-medium">모집 기간</label>
-      <input type="date" id="due_date" name="due_date" class="w-full p-2 border rounded-lg mb-4">
-
-      <label class="block mb-2 font-medium">모집 인원</label>
-      <input type="number" id="capacity" name="capacity" class="w-full p-2 border rounded-lg mb-4" placeholder="모집 인원을 입력하세요">
-
-      <label class="block mb-2 font-medium">세부 사항 (최대 50자)</label>
-      <textarea id="details" name="details" class="w-full p-2 border rounded-lg mb-4 h-32" placeholder="세부 사항을 입력하세요 (예: 비용, 모임 장소)" maxlength="50"></textarea>
-
-      <div class="flex justify-between">
-            <button type="submit" class="flex-1 bg-orange-500 text-white p-2 m-2 rounded-lg hover:bg-orange-600">작성 완료</button>
-            <button type="button" onclick="window.history.back();" class="flex-1 bg-gray-500 text-white p-2 m-2 rounded-lg hover:bg-gray-600">나가기</button>
-      </div>
-    </form>
+    <form id="posting-form" action="{% if post_id %}/updatepost{% else %}/posting{% endif %}" method="POST" onsubmit="return validateForm();" class="transition duration-300">
+      
+        <input type="hidden" name="_id" value="{{ post_id or '' }}"> <!-- 수정 모드에서 게시글 ID 유지 -->
+  
+        <label class="block mb-2 font-medium">제목</label>
+        <input type="text" id="post_title" name="post_title" class="w-full p-2 border rounded-lg mb-4" 
+               placeholder="제목을 입력하세요(최대 30자)" maxlength="30" value="{{ title or '' }}">
+  
+        <label class="block mb-2 font-medium">게시글 유형</label>
+        <select id="post_type" name="post_type" class="w-full p-2 border rounded-lg mb-4">
+            <option value="음식" {% if post_type == '음식' %}selected{% endif %}>음식</option>
+            <option value="운동" {% if post_type == '운동' %}selected{% endif %}>운동</option>
+            <option value="기타" {% if post_type == '기타' %}selected{% endif %}>기타</option>
+        </select>
+  
+        <label class="block mb-2 font-medium">활동 날짜</label>
+        <input type="date" id="meet_date" name="meet_date" class="w-full p-2 border rounded-lg mb-4"
+               value="{{ meet_date or '' }}">
+  
+        <label class="block mb-2 font-medium">모집 기간</label>
+        <input type="date" id="due_date" name="due_date" class="w-full p-2 border rounded-lg mb-4"
+               value="{{ due_date or '' }}">
+  
+        <label class="block mb-2 font-medium">모집 인원</label>
+        <input type="number" id="capacity" name="capacity" class="w-full p-2 border rounded-lg mb-4"
+               placeholder="모집 인원을 입력하세요" value="{{ goal_personnel or '' }}">
+  
+        <label class="block mb-2 font-medium">세부 사항 (최대 50자)</label>
+        <textarea id="details" name="details" class="w-full p-2 border rounded-lg mb-4 h-32" 
+                  placeholder="세부 사항을 입력하세요 (예: 비용, 모임 장소)" maxlength="50">{{ details or '' }}</textarea>
+  
+        <div class="flex justify-between">
+              <button type="submit" class="flex-1 bg-orange-500 text-white p-2 m-2 rounded-lg hover:bg-orange-600">
+                {% if post_id %}수정 완료{% else %}작성 완료{% endif %}
+              </button>
+              <button type="button" onclick="window.history.back();" 
+                      class="flex-1 bg-gray-500 text-white p-2 m-2 rounded-lg hover:bg-gray-600">나가기</button>
+        </div>
+      </form>
   </div>
 
   <script>
