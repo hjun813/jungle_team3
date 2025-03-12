@@ -270,7 +270,5 @@ def applypost():
         flash("조회 실패거나 조회할 게시물이 없습니다. 새로고침 하세요")
         return render_template("attendpost.html")
     
-    
-    
 if __name__ == "__main__":
     app.run('0.0.0.0',port=5001,debug=True)
