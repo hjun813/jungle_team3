@@ -88,25 +88,3 @@
 </body>
 
 </html>
-
-
-<!-- app.py 추가 -->
-
-<!-- @app.route("/mypage")
-@jwt_required()
-def mypage():
-    current_user = get_jwt_identity()
-    
-    # 사용자가 작성한 게시글
-    user_posts = list(db.posts.find({'author': current_user}))
-    
-    # 사용자가 신청한 게시글
-    user_joined_posts = list(db.posts.find({'attendPeople': current_user}))
-    
-    for post in user_posts:
-        post['_id'] = str(post['_id'])
-    
-    for post in user_joined_posts:
-        post['_id'] = str(post['_id'])
-    
-    return render_template('mypage.html', user_posts=user_posts, user_joined_posts=user_joined_posts) -->
