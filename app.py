@@ -326,8 +326,37 @@ def updatepost():
         flash("게시글 수정에 실패했습니다.", "error")
         return redirect(url_for("mypost"))
     
+@app.route("/checkattendpeople",methods=["GET"])
+@jwt_required()
+def checkattendpeople():
+    _id = ObjectId(request.args.get('_id'))
+
+    posts = db.posts.find_one({'_id': _id}, {"_id": 0, "title":1, "author":1, "nowPersonnel":1,"goalPersonnel":1, "attendPeople": 1})
     
+    user_ids = list()
+    print(posts['attendPeople'])
     
+    for person in posts['attendPeople']:
+        user_ids.append(db.users.find_one({'userId':person},{'_id':0,'userId':1,'kakaoId':1}))
+        
+    for person in user_ids:
+        print(person)
+    if user_ids:
+        return render_template("mypage_mypost_listcheck.html",posts = posts, users = user_ids)
+    else:
+        flash("참석자 명단 확인 불가", "error")
+        return render_template("mypage_mypost_listcheck.html")
+    
+@app.route("/cancelmeetingonmypage",methods=["POST"])
+@jwt_required()
+def cancelmeetingonmypage():
+    current_user = get_jwt_identity()
+    _id = ObjectId(request.form['_id'])
+    result = cancel(_id,current_user)
+    if result:
+        return redirect(url_for("applypost"))
+    else:
+        return redirect(url_for("applyPost"))
     
 if __name__ == "__main__":
     app.run('0.0.0.0',port=5001,debug=True)
