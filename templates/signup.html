@@ -60,15 +60,15 @@
     </div>
     <!-- email 입력 -->
     <div class="mb-6">
-        <label for="signup-email" class="block text-sm font-medium text-gray-700 mb-2">email</label>
+        <label for="signup-email" class="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
         <input type="text" id="signup-email" name="email" value="{{ email if email else '' }}"
             class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             placeholder="email을 입력하세요">
     </div>
     <!-- OTP 요청 버튼 -->
     <div class="mb-6">
-        <input type="otprequest" value="OTP 요청"
-            class="w-full bg-orange-400 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition duration-300 cursor-pointer"
+        <input type="button" value="OTP 요청"
+            class="w-full bg-blue-400 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition duration-300 cursor-pointer"
             onclick="requestOTP()">
     </div>
     <!-- OTP 입력 -->
@@ -80,8 +80,8 @@
     </div>
     <!-- OTP 확인 버튼 -->
     <div class="mb-6">
-        <input type="otpverify" value="OTP 확인"
-            class="w-full bg-orange-400 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition duration-300 cursor-pointer"
+        <input type="button" value="OTP 확인"
+            class="w-full bg-green-400 text-white py-3 rounded-lg font-medium hover:bg-green-600 transition duration-300 cursor-pointer"
             onclick="verifyOTP()">
     </div>
     <!-- 회원가입 버튼 -->
@@ -133,17 +133,15 @@
             alert('카카오 아이디를 입력해야 합니다.')
             return false;
         }
-        if(!verifyOtpCode){
+        if (!verifyOtpCode) {
             alert("OTP 인증 후 시도하십시오")
             return false;
         }
         return true;
     }
-
-
     function requestOTP() {
-        let email = document.getElementById('signup-email').value.trim();
-        
+        let emailInput = document.getElementById('signup-email');
+        let email = emailInput.value.trim();
         if (!email) {
             alert('이메일을 입력해야 합니다.');
             return;
@@ -156,6 +154,9 @@
                 if (response["result"] == "success") {
                     otp_code = response['otp_code']
                     alert("OTP가 발송되었습니다. 이메일을 확인하세요.");
+                    // 이메일 입력창 비활성화 및 스타일 변경
+                    emailInput.disabled = true;
+                    emailInput.classList.add("bg-gray-200", "cursor-not-allowed");
                 } else {
                     alert(response["message"]);
                 }
@@ -165,9 +166,7 @@
             }
         });
     }
-
     function verifyOTP() {
-        
         let otp = document.getElementById('signup-otp').value.trim();
         console.log(otp)
         console.log(otp_code)
@@ -175,13 +174,17 @@
             alert('OTP를 입력해야 합니다.');
             return;
         }
-        if(otp != otp_code){
+        if (otp != otp_code) {
             alert("인증번호가 틀렸습니다.")
-        }else{
+        } else {
             alert("인증 성공")
             verifyOtpCode = true
         }
     }
+    // **여기에 추가**
+    document.getElementById("signup-form").addEventListener("submit", function() {
+        document.getElementById("signup-email").disabled = false;
+    });
 </script>
 <script>
     $(document).ready(function () {

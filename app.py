@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, flash, url_for, session, jsonify,make_response
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token, set_access_cookies, get_jwt_identity
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, set_access_cookies, get_jwt_identity, unset_jwt_cookies
 from jinja2 import Environment, FileSystemLoader
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -44,6 +44,7 @@ def signup_page():
     return render_template('signup.html')
 
 @app.route("/posting",methods=["GET"])
+@jwt_required()
 def posting_page():
     post_id = request.args.get("_id")  # URL에서 게시물 ID 가져오기
     title = request.args.get("title", "")
@@ -105,14 +106,6 @@ def checkOtp():
   user_input = request.form.get("input_otp")
   result= verify_otp_redis(email, user_input)
   return jsonify({"result": result})
-
-def verify_otp_redis(email, user_input):
-    stored_otp = redis_client.get(f"otp:{email}")
-    if stored_otp and stored_otp == user_input:
-      flash("이메일 인증이 완료되었습니다.")
-      return True
-    flash("이메일 인증에 실패하셨습니다.")
-    return False
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
@@ -319,6 +312,7 @@ def cancel(_id: ObjectId, current_user: str):
 @app.route("/mypage/mypost",methods=["GET"])
 @jwt_required()
 def mypost():
+    
     current_user = get_jwt_identity()
     
     page = int(request.args.get("page", 1))  # 페이지 (기본값: 1)
@@ -328,10 +322,15 @@ def mypost():
     pipeline = [
         {"$match": query},  # 마감일이 지나지 않은 게시물만 조회
         {"$skip": skip_count},  # 해당 페이지의 첫 번째 문서까지 건너뛰기
-        {"$limit": per_page}  # 페이지당 문서 개수 제한
+        {"$limit": per_page},  # 페이지당 문서 개수 제한
+        {"$sort":{"updatedAt":-1}}
     ]
     
-    myposts = list(db.posts.aggregate(pipeline))  # 리스트로 변환
+    try:
+        myposts = list(db.posts.aggregate(pipeline))
+    except Exception as e:
+        print(f"⚠️ 데이터 조회 중 오류 발생: {e}")
+        myposts = []  # 오류 발생 시 빈 리스트 반환
     
     for post in myposts:
         post['_id'] = str(post['_id'])
@@ -342,11 +341,13 @@ def mypost():
         
     total_posts = db.posts.count_documents(query)
     total_pages = (total_posts + per_page - 1) // per_page
-    if myposts:
-        return render_template("mypage_mypost.html", posts = myposts, total_pages = total_pages, total_posts=total_posts, page = page)
-    else:
-        flash("조회 실패 새로고침하세요")
-        return render_template("mypage_mypost.html")
+    
+    print(total_pages)
+    if not myposts:
+        print("⚠️ 조회된 게시물이 없습니다.")  # 디버깅 출력
+        return render_template("mypage_mypost.html", posts=[], message="조회된 게시물이 없습니다.")
+    return render_template("mypage_mypost.html", posts = myposts, total_pages = total_pages, total_posts=total_posts, page = page)
+        
         
 
 @app.route("/mypage/applypost",methods=["GET"])    
@@ -423,9 +424,9 @@ def updatepost():
 @app.route("/checkattendpeople",methods=["GET"])
 @jwt_required()
 def checkattendpeople():
-    _id = ObjectId(request.args.get('id'))
+    _id = ObjectId(request.args.get('_id'))
 
-    posts = db.posts.find_one({'_id': _id}, {"_id": 0, "title":1, "author":1, "postType":1,"nowPersonnel":1,"goalPersonnel":1, "attendPeople": 1})
+    posts = (db.posts.find_one({'_id': _id}, {"_id": 0, "title":1, "author":1, "postType":1,"nowPersonnel":1,"goalPersonnel":1, "attendPeople": 1}))
     
     user_ids = list()
     
@@ -455,6 +456,12 @@ def cancelmeetingonmypage():
     else:
         return redirect(url_for("applyPost"))
 
+
+@app.route('/logout')
+def logout():
+    response = redirect(url_for('home'))  # 로그인 페이지로 리디렉트
+    unset_jwt_cookies(response)  # 'token' 쿠키 삭제
+    return response
     
 
 if __name__ == "__main__":
